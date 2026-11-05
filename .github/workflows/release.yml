@@ -114,15 +114,76 @@ jobs:
         echo "AAB_PATH=$AAB_FILE" >> $GITHUB_ENV
 
     - name: Create or Update Release
+      id: create_release
+      continue-on-error: true
       uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ env.VERSION_NAME }}
-        name: Release v${{ env.VERSION_NAME }}
+        name: "Release v${{ env.VERSION_NAME }}"
         body_path: release_body.md
         draft: false
         prerelease: false
+        fail_on_unmatched_files: true
         files: |
           ${{ env.APK_PATH }}
           ${{ env.AAB_PATH }}
+
+    # GitHub occasionally rejects an asset upload with a transient 5xx
+    # ("Error creating policy") after the release itself has already been
+    # created. Finish the upload with the GitHub CLI and make sure the
+    # release ends up published rather than stuck as a draft.
+    - name: Retry Release upload
+      if: steps.create_release.outcome == 'failure' && !cancelled()
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG: v${{ env.VERSION_NAME }}
+        TITLE: "Release v${{ env.VERSION_NAME }}"
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TITLE" \
+            --notes-file release_body.md \
+            --draft || true
+        fi
+        gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+
+        uploaded=false
+        for attempt in 1 2 3 4 5; do
+          if gh release upload "$TAG" "$APK_PATH" "$AAB_PATH" \
+            --repo "$GITHUB_REPOSITORY" --clobber; then
+            uploaded=true
+            break
+          fi
+
+          echo "Upload attempt $attempt failed; retrying..."
+          sleep $((attempt * 10))
+        done
+
+        if [[ "$uploaded" != "true" ]]; then
+          echo "::error::Failed to upload the release assets after 5 attempts."
+          exit 1
+        fi
+
+        gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false
+
+    - name: Verify Release assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TAG: v${{ env.VERSION_NAME }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        published="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '[.assets[].name] | sort | .[]')"
+        for asset in "$(basename "$APK_PATH")" "$(basename "$AAB_PATH")"; do
+          if ! grep -Fxq "$asset" <<<"$published"; then
+            echo "::error::Missing release asset: $asset"
+            exit 1
+          fi
+        done
