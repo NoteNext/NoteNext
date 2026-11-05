@@ -1,47 +1,49 @@
 [versions]
 # SDK Versions
-# compileSdk stays 37 for the Compose BOM 2026.02.01 alphas. material3 dropped its
-# own minCompileSdk 37 requirement in 1.5.0-alpha23, but the BOM still pulls other
-# artifacts that want it. targetSdk stays 36 so runtime behavior is unchanged
-# (compileSdk only widens the APIs available at compile time).
+# compileSdk stays 37 for the Compose BOM 2026.09.00 artifacts. material3 dropped
+# its own minCompileSdk 37 requirement in 1.5.0-alpha23, but the BOM still pulls
+# other artifacts that want it. targetSdk stays 36 so runtime behavior is
+# unchanged (compileSdk only widens the APIs available at compile time).
 compileSdk = "37"
 minSdk     = "24"
 targetSdk  = "36"
 
 # ── Toolchain ───────────────────────────────────────────────────
-# AGP 9.x ships with built-in Kotlin — kotlin-android plugin no longer needed
-agp                  = "9.1.0"
+# AGP 9.x ships with built-in Kotlin — kotlin-android plugin no longer needed.
+# Kotlin stays on 2.3.x: KSP (2.3.13) is the latest published KSP and has no 2.4
+# line yet, so moving Kotlin forward would break annotation processing.
+agp                  = "9.5.1"
 kotlin               = "2.3.21"
-ksp                  = "2.3.9"          # tracks kotlin's 2.3 series — bump together with kotlin
-hilt                 = "2.59.2"
+ksp                  = "2.3.13"         # tracks kotlin's 2.3 series — bump together with kotlin
+hilt                 = "2.60.1"
 kotlin-serialization = "2.3.21"         # must stay in sync with kotlin
 
 # ── Compose & Material ──────────────────────────────────────────
-composeBom     = "2026.02.01"
-material3      = "1.5.0-alpha24"        # M3 Expressive — stabilized alpha
-dynamicColor   = "1.0.0"
-graphicsShapes = "1.0.1"
+composeBom     = "2026.09.00"
+material3      = "1.5.0-rc01"          # M3 Expressive
+dynamicColor   = "1.14.0"
+graphicsShapes = "1.1.0"
 animation      = "1.1.0"
 
 # ── AndroidX ────────────────────────────────────────────────────
-appcompat               = "1.7.1"
-glance                  = "1.1.1"
-core-ktx                = "1.17.0"
-annotation              = "1.9.1"
-lifecycle               = "2.9.1"
-activity-compose        = "1.10.1"
-room                    = "2.8.4"
-navigation-compose      = "2.9.5"
-datastore               = "1.2.1"
-biometric               = "1.4.0-alpha07"
-work                    = "2.11.0"
-hilt-navigation-compose = "1.3.0"
-hilt-work               = "1.3.0"
-hilt-compiler           = "1.3.0"
-google-fonts            = "1.7.8"
-paging                  = "3.4.1"
+appcompat               = "1.8.0"
+glance                  = "1.2.0"
+core-ktx                = "1.19.1"
+annotation              = "1.11.0"
+lifecycle               = "2.11.0"
+activity-compose        = "1.13.0"
+room                    = "2.8.5"
+navigation-compose      = "2.10.2"
+datastore               = "1.3.0"
+biometric               = "1.4.0-beta01"
+work                    = "2.12.0"
+hilt-navigation-compose = "1.4.0"
+hilt-work               = "1.4.0"
+hilt-compiler           = "1.4.0"
+google-fonts            = "1.12.1"
+paging                  = "3.5.3"
 documentfile            = "1.1.0"
-core-splashscreen       = "1.0.1"
+core-splashscreen       = "1.2.0"
 # 1.1.0 is the final stable release. Google has deprecated every API in this
 # artifact (EncryptedSharedPreferences / EncryptedFile / MasterKey) in favour of
 # using the Android Keystore directly, so this is a stability stop-gap, not a
@@ -51,37 +53,39 @@ security-crypto         = "1.1.0"
 # ── Image Loading (MAJOR: Coil 2 → Coil 3) ─────────────────────
 # Group ID changes from io.coil-kt  →  io.coil-kt.coil3
 # Package  changes from coil        →  coil3
-coil = "3.4.0"
+coil = "3.6.3"
 
 # ── Network ─────────────────────────────────────────────────────
 retrofit = "3.0.0"
-okhttp   = "5.3.0"    # latest stable version with full HTTP/3 support
-socketio = "2.1.0"    # Socket.IO client for real-time note collaboration
+okhttp   = "5.5.1"    # latest stable version with full HTTP/3 support
+socketio = "2.1.2"    # Socket.IO client for real-time note collaboration
 
 # ── Kotlinx ─────────────────────────────────────────────────────
-kotlinx-serialization = "1.8.1"
-kotlinx-collections-immutable = "0.4.0"
+kotlinx-serialization = "1.12.0"
+kotlinx-collections-immutable = "0.5.2"
 
 # ── Third-party ─────────────────────────────────────────────────
-jsoup = "1.21.2"
-gson  = "2.13.1"   # keep for now; remove after Retrofit migration in Phase 4
+jsoup = "1.24.1"
+gson  = "2.15.0"   # keep for now; remove after Retrofit migration in Phase 4
 
 # ── Google Services ─────────────────────────────────────────────
-play-services-auth        = "21.3.0"
-google-api-client         = "2.8.1"
-google-api-services-drive = "v3-rev20251210-2.0.0"
-google-auth-library        = "1.33.1"
+# Stay on the 21.x line: play-services-auth 22.0.0 removes the legacy
+# GoogleSignIn / GoogleSignInClient API that the Drive backup flow uses.
+play-services-auth        = "21.6.0"
+google-api-client         = "2.9.2"
+google-api-services-drive = "v3-rev20261023-2.9.2"
+google-auth-library        = "1.56.0"
 app-update                = "2.1.0"
 billing                   = "9.1.0"
 play-review               = "2.0.2"
 
 # ── ACRA ────────────────────────────────────────────────────────
-acra = "5.13.1"
+acra = "5.14.2"
 
 # ── Testing ─────────────────────────────────────────────────────
 junit       = "4.13.2"
-junit-ext   = "1.2.1"
-espresso    = "3.6.1"
+junit-ext   = "1.3.0"
+espresso    = "3.7.0"
 
 [libraries]
 # Material 3 Expressive MAIN dependencies

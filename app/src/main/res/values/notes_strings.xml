@@ -25,4 +25,8 @@
     <string name="link_dialog_url">URL</string>
     <string name="link_dialog_display_text">Display Text</string>
     <string name="link_dialog_insert">Insert</string>
+    <string name="link_dialog_open">Open link</string>
+    <string name="link_dialog_edit">Edit link</string>
+    <string name="link_dialog_copy">Copy link</string>
+    <string name="link_dialog_copied">Link copied to clipboard</string>
 </resources>

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.PictureAsPdf
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -97,10 +98,11 @@ private fun SaveAsOption(
 fun InsertLinkDialog(
     onDismiss: () -> Unit,
     onInsertLink: (String, String) -> Unit,
-    initialText: String = ""
+    initialText: String = "",
+    initialUrl: String = ""
 ) {
     var text by remember(initialText) { mutableStateOf(initialText) }
-    var url by remember { mutableStateOf("") }
+    var url by remember(initialUrl) { mutableStateOf(initialUrl) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -147,6 +149,7 @@ fun LinkActionDialog(
     url: String,
     onDismiss: () -> Unit,
     onOpenLink: () -> Unit,
+    onEditLink: () -> Unit,
     onCopyLink: () -> Unit
 ) {
     AlertDialog(
@@ -155,11 +158,29 @@ fun LinkActionDialog(
         title = { Text(stringResource(id = R.string.link_dialog_section_options)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(url, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                Text(
+                    url,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                SaveAsOption(icon = Icons.Rounded.OpenInNew, text = "Open in Browser", onClick = onOpenLink)
-                SaveAsOption(icon = Icons.Rounded.ContentCopy, text = "Copy URL", onClick = onCopyLink)
+
+                SaveAsOption(
+                    icon = Icons.Rounded.OpenInNew,
+                    text = stringResource(id = R.string.link_dialog_open),
+                    onClick = onOpenLink
+                )
+                SaveAsOption(
+                    icon = Icons.Rounded.Edit,
+                    text = stringResource(id = R.string.link_dialog_edit),
+                    onClick = onEditLink
+                )
+                SaveAsOption(
+                    icon = Icons.Rounded.ContentCopy,
+                    text = stringResource(id = R.string.link_dialog_copy),
+                    onClick = onCopyLink
+                )
             }
         },
         confirmButton = {

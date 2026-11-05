@@ -116,7 +116,7 @@ fun AddEditNoteScreen(
     var aiButtonOffsetY by remember { mutableStateOf(0f) }
     var isAiButtonDismissed by remember { mutableStateOf(false) }
 
-    var clickedUrl by remember { mutableStateOf<String?>(null) }
+    var clickedLink by remember { mutableStateOf<ClickedLink?>(null) }
     var showExactAlarmDialog by remember { mutableStateOf(false) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
 
@@ -535,7 +535,7 @@ fun AddEditNoteScreen(
                                     state = state,
                                     splitOffsets = splitOffsets,
                                     onEvent = onEvent,
-                                    onUrlClick = { url -> clickedUrl = url },
+                                    onUrlClick = { link -> clickedLink = link },
                                     onSlashCommand = { showSlashCommandSheet = true },
                                     onTextLayout = { textLayoutResult = it }
                                 )
@@ -601,7 +601,7 @@ fun AddEditNoteScreen(
                                         state = state,
                                         splitOffsets = splitOffsets,
                                         onEvent = onEvent,
-                                        onUrlClick = { url -> clickedUrl = url },
+                                        onUrlClick = { link -> clickedLink = link },
                                         onSlashCommand = { showSlashCommandSheet = true },
                                         onTextLayout = { textLayoutResult = it }
                                     )
@@ -760,8 +760,8 @@ fun AddEditNoteScreen(
         onShowExpiryDialogChange = { showExpiryDialog = it },
         showInsertLinkDialog = showInsertLinkDialog,
         onShowInsertLinkDialogChange = { showInsertLinkDialog = it },
-        clickedUrl = clickedUrl,
-        onClickedUrlChange = { clickedUrl = it },
+        clickedLink = clickedLink,
+        onClickedLinkChange = { clickedLink = it },
         showExactAlarmDialog = showExactAlarmDialog,
         onShowExactAlarmDialogChange = { showExactAlarmDialog = it },
         settingsRepository = settingsRepository,

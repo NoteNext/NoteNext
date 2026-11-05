@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -56,8 +57,8 @@ fun AddEditNoteDialogs(
     onShowExpiryDialogChange: (Boolean) -> Unit,
     showInsertLinkDialog: Boolean,
     onShowInsertLinkDialogChange: (Boolean) -> Unit,
-    clickedUrl: String?,
-    onClickedUrlChange: (String?) -> Unit,
+    clickedLink: ClickedLink?,
+    onClickedLinkChange: (ClickedLink?) -> Unit,
     showExactAlarmDialog: Boolean,
     onShowExactAlarmDialogChange: (Boolean) -> Unit,
     settingsRepository: SettingsRepository,
@@ -67,6 +68,10 @@ fun AddEditNoteDialogs(
     onSaveAsMd: () -> Unit
 ) {
     val context = LocalContext.current
+
+    // Set when the user chooses "Edit link": the insert dialog is reused with
+    // the tapped link's label and URL prefilled, and the link range selected.
+    var editingLink by remember { mutableStateOf<ClickedLink?>(null) }
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -207,30 +212,56 @@ fun AddEditNoteDialogs(
             ""
         }
         InsertLinkDialog(
-            onDismiss = { onShowInsertLinkDialogChange(false) },
-            initialText = selectedText,
+            onDismiss = {
+                editingLink = null
+                onShowInsertLinkDialogChange(false)
+            },
+            initialText = editingLink?.label ?: selectedText,
+            initialUrl = editingLink?.url ?: "",
             onInsertLink = { text, url ->
                 onEvent(NotesEvent.OnInsertLink(url, text))
+                editingLink = null
                 onShowInsertLinkDialogChange(false)
             }
         )
     }
 
-    if (clickedUrl != null) {
+    clickedLink?.let { link ->
         LinkActionDialog(
-            url = clickedUrl,
-            onDismiss = { onClickedUrlChange(null) },
+            url = link.url,
+            onDismiss = { onClickedLinkChange(null) },
             onOpenLink = {
-                onClickedUrlChange(null)
-                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(clickedUrl))
+                onClickedLinkChange(null)
+                val intent = android.content.Intent(
+                    android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse(link.url)
+                )
                 context.startActivity(intent)
             },
+            onEditLink = {
+                onClickedLinkChange(null)
+                editingLink = link
+                // Select the existing link so insertLink replaces exactly that
+                // range instead of appending a second link at the cursor.
+                onEvent(
+                    NotesEvent.OnContentChange(
+                        state.editingContent.copy(
+                            selection = TextRange(link.start, link.end)
+                        )
+                    )
+                )
+                onShowInsertLinkDialogChange(true)
+            },
             onCopyLink = {
-                onClickedUrlChange(null)
+                onClickedLinkChange(null)
                 val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                val clip = android.content.ClipData.newPlainText("URL", clickedUrl)
+                val clip = android.content.ClipData.newPlainText("URL", link.url)
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(context, "Link copied to clipboard", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.link_dialog_copied),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         )
     }

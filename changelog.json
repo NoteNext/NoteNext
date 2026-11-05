@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.6.1",
+      "date": "November 5, 2026",
+      "items": [
+        {
+          "title": "Open or Edit Links from the Editor",
+          "description": "Tapping a hyperlink in a note now offers Open link, Edit link and Copy link. Edit link opens the link dialog prefilled with the existing label and URL, and updates the link in place instead of sending you into plain text editing.",
+          "type": "FEATURE"
+        },
+        {
+          "title": "Latest Stable Toolchain and Libraries",
+          "description": "Upgraded to AGP 9.5.1, Gradle 9.8.2, Compose BOM 2026.09.00, Material 3 1.5.0-rc01, Hilt 2.60.1, Room 2.8.5, Navigation 2.10.2, Lifecycle 2.11.0, Coil 3.6.3, OkHttp 5.5.1 and the latest AndroidX releases, with the version catalog cleaned up to match.",
+          "type": "IMPROVEMENT"
+        }
+      ]
+    },
+    {
       "version": "1.6.0",
       "date": "September 6, 2026",
       "items": [

@@ -20,8 +20,11 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.ui.res.stringResource
 import com.suvojeet.notenext.R
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.graphics.SolidColor
@@ -32,6 +35,18 @@ import androidx.compose.material.icons.filled.Timer
 import com.suvojeet.notenext.ui.components.springPress
 import com.suvojeet.notenext.ui.theme.*
 import kotlinx.coroutines.launch
+
+/**
+ * A hyperlink the user tapped in the editor. [start] and [end] are offsets into
+ * the whole note body (not the current editor chunk), so the caller can select
+ * the link range and open the link editor with it prefilled.
+ */
+data class ClickedLink(
+    val url: String,
+    val label: String,
+    val start: Int,
+    val end: Int
+)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -95,7 +110,7 @@ fun LazyListScope.NoteContentItems(
     state: NotesEditState,
     splitOffsets: List<Int>,
     onEvent: (NotesEvent) -> Unit,
-    onUrlClick: (String) -> Unit,
+    onUrlClick: (ClickedLink) -> Unit,
     onSlashCommand: () -> Unit,
     onTextLayout: (TextLayoutResult) -> Unit = {}
 ) {
@@ -137,7 +152,7 @@ fun NoteContentChunkEditor(
     endOffset: Int,
     state: NotesEditState,
     onEvent: (NotesEvent) -> Unit,
-    onUrlClick: (String) -> Unit,
+    onUrlClick: (ClickedLink) -> Unit,
     onSlashCommand: () -> Unit,
     onTextLayout: (TextLayoutResult) -> Unit
 ) {
@@ -301,24 +316,72 @@ fun NoteContentChunkEditor(
                 .fillMaxWidth()
                 .bringIntoViewRequester(bringIntoViewRequester)
                 .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                         chunkLayoutResult?.let { layoutResult ->
-                             val position = layoutResult.getOffsetForPosition(offset)
-                             val annotatedString = currentChunk.annotatedString
+                    // Watch the Initial pass: BasicTextField handles taps in the Main
+                    // pass and would otherwise place the caret before a regular tap
+                    // detector ever sees the gesture. Nothing is consumed until we
+                    // know this is a click on a link, so list scrolling still works
+                    // when the finger starts on a link and then drags.
+                    awaitEachGesture {
+                        val down = awaitFirstDown(
+                            requireUnconsumed = false,
+                            pass = PointerEventPass.Initial
+                        )
+                        var movedDistance = 0f
+                        var upChange: PointerInputChange? = null
 
-                             val urlAnnotation = annotatedString.getStringAnnotations("URL", position, position).firstOrNull()
-                                 ?: annotatedString.getStringAnnotations("EMAIL", position, position).firstOrNull()
-                                 ?: annotatedString.getStringAnnotations("PHONE", position, position).firstOrNull()
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                            val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!change.pressed) {
+                                upChange = change
+                                break
+                            }
+                            movedDistance += (change.position - change.previousPosition).getDistance()
+                            if (movedDistance > viewConfiguration.touchSlop) {
+                                // It's a scroll/fling, not a click — leave it alone.
+                                break
+                            }
+                        }
 
-                             if (urlAnnotation != null) {
-                                 currentOnUrlClick(urlAnnotation.item)
-                             } else {
-                                 annotatedString.getStringAnnotations("NOTE_LINK", position, position)
-                                     .firstOrNull()?.let { annotation ->
-                                         currentOnEvent(NotesEvent.NavigateToNoteByTitle(annotation.item))
-                                     }
-                             }
-                         }
+                        val up = upChange ?: return@awaitEachGesture
+                        if (movedDistance > viewConfiguration.touchSlop) return@awaitEachGesture
+
+                        val layoutResult = chunkLayoutResult ?: return@awaitEachGesture
+                        val position = layoutResult.getOffsetForPosition(up.position)
+                        val annotatedString = currentChunk.annotatedString
+
+                        val urlAnnotation = annotatedString
+                            .getStringAnnotations("URL", position, position).firstOrNull()
+                            ?: annotatedString
+                                .getStringAnnotations("EMAIL", position, position).firstOrNull()
+                            ?: annotatedString
+                                .getStringAnnotations("PHONE", position, position).firstOrNull()
+
+                        if (urlAnnotation != null) {
+                            // Consume only now: the text field will not get the up
+                            // event, so the caret stays put and the keyboard stays
+                            // closed while the link dialog opens.
+                            up.consume()
+                            val localStart = urlAnnotation.start
+                                .coerceIn(0, currentChunk.text.length)
+                            val localEnd = urlAnnotation.end
+                                .coerceIn(localStart, currentChunk.text.length)
+                            currentOnUrlClick(
+                                ClickedLink(
+                                    url = urlAnnotation.item,
+                                    label = currentChunk.text.substring(localStart, localEnd),
+                                    start = startOffset + localStart,
+                                    end = startOffset + localEnd
+                                )
+                            )
+                        } else {
+                            annotatedString
+                                .getStringAnnotations("NOTE_LINK", position, position)
+                                .firstOrNull()?.let { annotation ->
+                                    up.consume()
+                                    currentOnEvent(NotesEvent.NavigateToNoteByTitle(annotation.item))
+                                }
+                        }
                     }
                 },
             onTextLayout = { 
