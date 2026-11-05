@@ -74,7 +74,9 @@ gson  = "2.15.0"   # keep for now; remove after Retrofit migration in Phase 4
 play-services-auth        = "21.6.0"
 google-api-client         = "2.9.2"
 google-api-services-drive = "v3-rev20261023-2.9.2"
-google-auth-library        = "1.56.0"
+# 1.56.0 depends on com.google.api:api-common:2.72.0, which is not on Maven
+# Central yet; 1.55.0 uses the published 2.71.0.
+google-auth-library        = "1.55.0"
 app-update                = "2.1.0"
 billing                   = "9.1.0"
 play-review               = "2.0.2"
