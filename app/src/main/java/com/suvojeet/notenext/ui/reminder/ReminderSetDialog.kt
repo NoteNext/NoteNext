@@ -145,7 +145,7 @@ fun ReminderSheetContent(
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedRepeatMenu) },
                 shape = MaterialTheme.shapes.extraSmall,
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .fillMaxWidth()
             )
             ExposedDropdownMenu(
