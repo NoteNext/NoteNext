@@ -1,9 +1,6 @@
 @file:OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 package com.suvojeet.notenext.ui.components
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -19,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -98,18 +94,9 @@ fun NoteItem(
             note.note
         }
     }
-    val motionScheme = MaterialTheme.motionScheme
     val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
     val primary = MaterialTheme.colorScheme.primary
     val outlineVariant = MaterialTheme.colorScheme.outlineVariant
-
-    // Google Keep–style flat cards: no drop shadow. Separation comes from a
-    // crisp thin outline + the container colour, not elevation.
-    val elevation by animateDpAsState(
-        targetValue = 0.dp,
-        animationSpec = motionScheme.fastSpatialSpec(),
-        label = "Elevation"
-    )
 
     val cardShape = MaterialTheme.shapes.medium
 
@@ -124,7 +111,6 @@ fun NoteItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .springPress()
             .combinedClickable(
                 onClick = onNoteClick,
                 onLongClick = onNoteLongClickHaptic
@@ -135,7 +121,7 @@ fun NoteItem(
             contentColor = contentColor
         ),
         border = borderStroke,
-        elevation = CardDefaults.cardElevation(defaultElevation = elevation)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Box(
             modifier = Modifier.fillMaxSize()

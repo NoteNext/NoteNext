@@ -29,15 +29,15 @@ import com.suvojeet.notenext.ui.components.springPress
 /**
  * Google Keep–style attachment bottom sheet shown from the editor's "+" button.
  * Reuses the same ModalBottomSheet config as [MoreOptionsSheet] so the slide-up
- * animation matches exactly. Rows: Take photo, Add image, Drawing, Recording,
- * Tick boxes.
+ * animation matches exactly. Rows: Take photo, Add image, Drawing (only when
+ * the caller can handle it), Recording, Tick boxes.
  */
 @Composable
 fun AttachmentSheet(
     onDismiss: () -> Unit,
     onTakePhotoClick: () -> Unit,
     onImageClick: () -> Unit,
-    onDrawingClick: () -> Unit,
+    onDrawingClick: (() -> Unit)? = null,
     onAudioClick: () -> Unit,
     onTickBoxesClick: () -> Unit
 ) {
@@ -61,8 +61,10 @@ fun AttachmentSheet(
             AttachmentRow(Icons.Outlined.Image, stringResource(id = R.string.add_image)) {
                 onDismiss(); onImageClick()
             }
-            AttachmentRow(Icons.Outlined.Brush, stringResource(id = R.string.drawing)) {
-                onDismiss(); onDrawingClick()
+            if (onDrawingClick != null) {
+                AttachmentRow(Icons.Outlined.Brush, stringResource(id = R.string.drawing)) {
+                    onDismiss(); onDrawingClick()
+                }
             }
             AttachmentRow(Icons.Outlined.Mic, stringResource(id = R.string.audio_recording)) {
                 onDismiss(); onAudioClick()

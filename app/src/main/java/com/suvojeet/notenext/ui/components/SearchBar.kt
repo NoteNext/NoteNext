@@ -46,8 +46,7 @@ fun SearchBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .springPress(),
+            .height(56.dp),
         shape = fullShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 2.dp
@@ -69,7 +68,7 @@ fun SearchBar(
                     IconButton(onClick = { 
                         onSearchActiveChange(false)
                         onSearchQueryChange("")
-                    }, modifier = Modifier.springPress()) {
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(id = R.string.back)
@@ -115,21 +114,21 @@ fun SearchBar(
             )
 
             if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }, modifier = Modifier.springPress()) {
+                IconButton(onClick = { onSearchQueryChange("") }) {
                     Icon(Icons.Default.Close, contentDescription = "Clear")
                 }
             }
 
             if (!isSearchActive) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onLayoutToggleClick, modifier = Modifier.springPress()) {
+                    IconButton(onClick = onLayoutToggleClick) {
                         Icon(
                             imageVector = if (layoutType == LayoutType.GRID) Icons.Default.ViewAgenda else Icons.Default.GridView,
                             contentDescription = "Toggle Layout"
                         )
                     }
                     Box {
-                        IconButton(onClick = onSortClick, modifier = Modifier.springPress()) {
+                        IconButton(onClick = onSortClick) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
                                 contentDescription = "Sort"
@@ -142,17 +141,17 @@ fun SearchBar(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                         ) {
                             SortOption(
-                                label = "Date Modified",
+                                label = stringResource(id = com.suvojeet.notenext.core.R.string.date_modified),
                                 isSelected = currentSortType == SortType.DATE_MODIFIED,
                                 onClick = { onSortOptionClick(SortType.DATE_MODIFIED) }
                             )
                             SortOption(
-                                label = "Date Created",
+                                label = stringResource(id = com.suvojeet.notenext.core.R.string.date_created),
                                 isSelected = currentSortType == SortType.DATE_CREATED,
                                 onClick = { onSortOptionClick(SortType.DATE_CREATED) }
                             )
                             SortOption(
-                                label = "Title",
+                                label = stringResource(id = com.suvojeet.notenext.core.R.string.sort_by_alpha),
                                 isSelected = currentSortType == SortType.TITLE,
                                 onClick = { onSortOptionClick(SortType.TITLE) }
                             )

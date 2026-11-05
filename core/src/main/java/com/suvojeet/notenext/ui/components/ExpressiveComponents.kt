@@ -1,90 +1,70 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 package com.suvojeet.notenext.ui.components
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.CornerRounding
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.toPath
 import com.suvojeet.notenext.core.R
-import kotlinx.coroutines.delay
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.scale
-
+/**
+ * A top-app-bar icon button with a short cross-fade when the icon changes.
+ *
+ * The [delay] parameter is kept for source compatibility with existing call
+ * sites but no longer staggers the buttons in — a toolbar should appear as one
+ * unit rather than popping in one icon at a time.
+ */
 @Composable
 fun AnimatedIconButton(
     onClick: () -> Unit,
     icon: ImageVector,
     contentDescription: String,
-    delay: Int = 0,
+    @Suppress("UNUSED_PARAMETER") delay: Int = 0,
     tint: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier
 ) {
-    var isVisible by remember { mutableStateOf(false) }
-    var isPressed by remember { mutableStateOf(false) }
-
-    // Trigger the entrance animation after the specified delay.
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(delay.toLong())
-        isVisible = true
-    }
-
-    // Animate the scale for the entrance.
-    val entranceScale by animateFloatAsState(
-        targetValue = if (isVisible) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "IconEntranceScale"
-    )
-
-    // Animate the scale for the press effect.
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.85f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
-        label = "IconPressScale"
-    )
-
-    IconButton(
-        onClick = {
-            isPressed = true
-            onClick()
-        },
-        modifier = modifier.scale(entranceScale * pressScale)
-    ) {
+    IconButton(onClick = onClick, modifier = modifier) {
         AnimatedContent(
             targetState = icon,
             transitionSpec = {
-                (fadeIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + 
-                 scaleIn(initialScale = 0.7f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)))
-                    .togetherWith(fadeOut(animationSpec = spring()) + scaleOut(targetScale = 0.7f))
+                fadeIn(animationSpec = tween(durationMillis = 120))
+                    .togetherWith(fadeOut(animationSpec = tween(durationMillis = 120)))
             },
             label = "IconChange"
         ) { targetIcon ->
@@ -93,14 +73,6 @@ fun AnimatedIconButton(
                 contentDescription = contentDescription,
                 tint = tint
             )
-        }
-    }
-
-    // Reset the press state after a short delay to create a 'pop' effect.
-    LaunchedEffect(isPressed) {
-        if (isPressed) {
-            kotlinx.coroutines.delay(100)
-            isPressed = false
         }
     }
 }
@@ -119,8 +91,7 @@ fun AnimatedDropdownItem(
                 color = textColor
             )
         },
-        onClick = onClick,
-        modifier = Modifier.animateContentSize() // Animates size changes.
+        onClick = onClick
     )
 }
 
@@ -134,7 +105,7 @@ fun ExpressiveSection(
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
@@ -161,16 +132,20 @@ fun SettingsGroupCard(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
+/**
+ * Subtle press feedback for tappable surfaces. The scale change is small and
+ * non-bouncy so it reads as tactile rather than toy-like.
+ */
 @Composable
 fun Modifier.springPress(
-    dampingRatio: Float = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
-    stiffness: Float = 400f
+    dampingRatio: Float = Spring.DampingRatioNoBouncy,
+    stiffness: Float = Spring.StiffnessHigh
 ): Modifier {
     var isPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.94f else 1f,
+        targetValue = if (isPressed) 0.97f else 1f,
         animationSpec = spring(dampingRatio = dampingRatio, stiffness = stiffness),
-        label = "SpringPressScale"
+        label = "PressScale"
     )
     return this
         .pointerInput(Unit) {
@@ -192,133 +167,35 @@ fun Modifier.springPress(
 @Composable
 fun ExpressiveLoading(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(contentAlignment = Alignment.Center) {
-                // Subtle pulsing background for the loading indicator
-                val infiniteTransition = rememberInfiniteTransition(label = "LoadingBg")
-                val scale by infiniteTransition.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 1.5f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1500, easing = EaseInOutSine),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "PulseScale"
-                )
-                
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                        }
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
-                )
-                
-                LoadingIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            var loadingText by remember { mutableStateOf("Loading...") }
-            LaunchedEffect(Unit) {
-                val texts = listOf("Gathering your notes...", "Organizing...", "Almost there...", "Setting things up...")
-                var index = 0
-                while(true) {
-                    loadingText = texts[index]
-                    delay(2000)
-                    index = (index + 1) % texts.size
-                }
-            }
-            
-            AnimatedContent(
-                targetState = loadingText,
-                transitionSpec = {
-                    (fadeIn() + slideInVertically { it / 2 }).togetherWith(fadeOut() + slideOutVertically { -it / 2 })
-                },
-                label = "LoadingText"
-            ) { text ->
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
+        LoadingIndicator(
+            modifier = Modifier.size(40.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
 /**
- * ButtonGroup graduated to stable in material3 1.5.0-alpha22, which changed its
- * shape: `overflowIndicator` is now required, and `content` is a plain scope
- * lambda (you declare items via [ButtonGroupScope]) rather than a @Composable
- * one. The indicator defaults to Material's own so callers keep the original
- * modifier-plus-content ergonomics.
+ * Static brand mark used on the welcome/setup screens. The previous version
+ * morphed between shapes forever, which never settles and pulls attention away
+ * from the page content.
  */
 @Composable
-fun ExpressiveButtonGroup(
-    modifier: Modifier = Modifier,
-    overflowIndicator: @Composable (ButtonGroupMenuState) -> Unit = { menuState ->
-        ButtonGroupDefaults.OverflowIndicator(menuState)
-    },
-    content: ButtonGroupScope.() -> Unit
-) {
-    ButtonGroup(
-        overflowIndicator = overflowIndicator,
-        modifier = modifier,
-        content = content
-    )
-}
-
-@Composable
 fun MorphingLogo(modifier: Modifier = Modifier, size: Dp = 120.dp) {
-    val infiniteTransition = rememberInfiniteTransition(label = "MorphingLogoInfinite")
-    val progress by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2000, easing = EaseInOutCubic),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "MorphProgress"
-    )
-
-    val shapeA = remember { RoundedPolygon(numVertices = 30) } // Circle approx
-    val shapeB = remember { RoundedPolygon(numVertices = 4, rounding = CornerRounding(0.4f)) } // Rounded square
-    
-    val morph = remember { Morph(shapeA, shapeB) }
-    
-    val containerColor = MaterialTheme.colorScheme.primaryContainer
-
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val androidPath = morph.toPath(progress)
-            
-            // Re-scale the path to fit the canvas
-            val scaleMatrix = android.graphics.Matrix()
-            scaleMatrix.setScale(size.toPx(), size.toPx())
-            scaleMatrix.postTranslate(0f, 0f) 
-            androidPath.transform(scaleMatrix)
-
-            drawPath(
-                path = androidPath.asComposePath(),
-                color = containerColor
+    Surface(
+        modifier = modifier.size(size),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(0.72f)
             )
         }
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(0.8f)
-        )
     }
 }
 
@@ -330,8 +207,8 @@ fun AnimatedSetupStep(
 ) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(spring(dampingRatio = 0.6f, stiffness = 400f)) +
-                slideInVertically(spring(dampingRatio = 0.6f, stiffness = 400f)) { it / 3 },
+        enter = fadeIn(tween(durationMillis = 220, delayMillis = delay)) +
+                slideInVertically(tween(durationMillis = 220, delayMillis = delay)) { it / 6 },
         exit = fadeOut()
     ) {
         content()
@@ -347,13 +224,13 @@ fun SetupLoadingScreen() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            MorphingLogo(size = 140.dp)
+            MorphingLogo(size = 120.dp)
             Spacer(modifier = Modifier.height(32.dp))
-            LoadingIndicator()
+            LoadingIndicator(color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Setting things up...",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "Setting things up…",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

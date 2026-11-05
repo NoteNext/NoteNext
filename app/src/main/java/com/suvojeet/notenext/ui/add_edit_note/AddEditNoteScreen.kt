@@ -1003,9 +1003,10 @@ fun AddEditNoteScreen(
                 }
             },
             onImageClick = { getContent.launch("image/*") },
-            onDrawingClick = {
-                Toast.makeText(context, "Drawing not implemented yet", Toast.LENGTH_SHORT).show()
-            },
+            // Drawing is a standalone canvas reachable from the home FAB. It can't
+            // be inserted into the note currently being edited, so the row is
+            // hidden rather than left as a button that only shows a "not
+            // implemented" toast.
             onAudioClick = startAudioRecording,
             onTickBoxesClick = { onEvent(NotesEvent.AddChecklistItem) }
         )

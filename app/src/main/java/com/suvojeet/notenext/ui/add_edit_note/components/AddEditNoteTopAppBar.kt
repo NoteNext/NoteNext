@@ -1,14 +1,8 @@
 @file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 package com.suvojeet.notenext.ui.add_edit_note.components
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -117,12 +111,12 @@ fun AddEditNoteTopAppBar(
                 if (!state.editingIsNewNote) {
                     val pinContainerColor by animateColorAsState(
                         targetValue = if (state.isPinned) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy),
+                        animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy),
                         label = "PinContainerColor"
                     )
                     val pinContentColor by animateColorAsState(
                         targetValue = if (state.isPinned) MaterialTheme.colorScheme.primary else contentColor,
-                        animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy),
+                        animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioNoBouncy),
                         label = "PinContentColor"
                     )
 
@@ -135,20 +129,10 @@ fun AddEditNoteTopAppBar(
                             contentColor = pinContentColor
                         )
                     ) {
-                        AnimatedContent(
-                            targetState = state.isPinned,
-                            transitionSpec = {
-                                (fadeIn(animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy)) + 
-                                 scaleIn(initialScale = 0.7f, animationSpec = spring(dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy)))
-                                    .togetherWith(fadeOut(animationSpec = spring()) + scaleOut(targetScale = 0.7f))
-                            },
-                            label = "PinIconChange"
-                        ) { isPinned ->
-                            Icon(
-                                imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                                contentDescription = if (isPinned) stringResource(id = R.string.unpin_note) else stringResource(id = R.string.pin_note)
-                            )
-                        }
+                        Icon(
+                            imageVector = if (state.isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = if (state.isPinned) stringResource(id = R.string.unpin_note) else stringResource(id = R.string.pin_note)
+                        )
                     }
                 }
 

@@ -3,18 +3,12 @@ package com.suvojeet.notenext.ui.add_edit_note.components
 
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -30,7 +24,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material.icons.Icons
@@ -45,17 +38,11 @@ import kotlinx.coroutines.launch
 fun NoteTitleEditor(
     state: NotesEditState,
     onEvent: (NotesEvent) -> Unit,
-    onReminderClick: () -> Unit,
-    scrollOffset: Float = 0f
+    onReminderClick: () -> Unit
 ) {
-    val parallaxOffset = (-scrollOffset * 0.2f).coerceIn(-20f, 20f)
-    
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .graphicsLayer {
-                translationY = parallaxOffset
-            }
     ) {
         val titleTextColor = MaterialTheme.colorScheme.onSurface
 
@@ -65,7 +52,7 @@ fun NoteTitleEditor(
             placeholder = { 
                 Text(
                     stringResource(id = R.string.title), 
-                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Black),
+                    style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.SemiBold),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
                 ) 
             },
@@ -84,8 +71,8 @@ fun NoteTitleEditor(
             ),
             textStyle = MaterialTheme.typography.displaySmall.copy(
                 color = titleTextColor,
-                fontWeight = FontWeight.Black,
-                letterSpacing = (-0.5).sp
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.25).sp
             ),
             singleLine = false,
             maxLines = 3
@@ -143,29 +130,6 @@ fun LazyListScope.NoteContentItems(
     }
 }
 
-/**
- * Pulsing alpha for the cursor glow, animated only while [active].
- *
- * Returning a flat 0 when inactive keeps the animation clock out of every chunk
- * that isn't being edited — the caller skips drawing entirely at that point.
- */
-@Composable
-private fun cursorGlowAlpha(active: Boolean): Float {
-    if (!active) return 0f
-
-    val infiniteTransition = rememberInfiniteTransition(label = "cursor_glow")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.1f,
-        targetValue = 0.4f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "glow_alpha"
-    )
-    return alpha
-}
-
 @Composable
 fun NoteContentChunkEditor(
     index: Int,
@@ -183,25 +147,7 @@ fun NoteContentChunkEditor(
     val currentOnUrlClick by rememberUpdatedState(onUrlClick)
     val currentOnEvent by rememberUpdatedState(onEvent)
     
-    // The glow pulses only in the chunk that actually holds the cursor. Every
-    // chunk used to start its own infinite transition, so a long note kept one
-    // never-ending animation alive per chunk, each invalidating its draw pass
-    // every frame for a decoration only one of them could show.
-    val cursorSelection = state.editingContent.selection
-    val hasCursor = cursorSelection.collapsed && cursorSelection.start in startOffset..endOffset
-    val glowAlpha = cursorGlowAlpha(active = hasCursor)
-
     val cursorColor = MaterialTheme.colorScheme.primary
-    val glowBrush = remember(cursorColor, glowAlpha) {
-        Brush.radialGradient(
-            colors = listOf(
-                cursorColor.copy(alpha = glowAlpha),
-                cursorColor.copy(alpha = glowAlpha * 0.4f),
-                Color.Transparent
-            ),
-            radius = 60f
-        )
-    }
 
     val contentTextColor = MaterialTheme.colorScheme.onSurface
     val contentTextStyle = when (state.activeHeadingStyle) {
@@ -349,26 +295,6 @@ fun NoteContentChunkEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .bringIntoViewRequester(bringIntoViewRequester)
-                .drawBehind {
-                    if (glowAlpha <= 0f) return@drawBehind
-                    chunkLayoutResult?.let { layout ->
-                        val globalCursor = state.editingContent.selection.start
-                        val localCursor = globalCursor - startOffset
-                        if (localCursor >= 0 && localCursor <= chunk.text.length && layout.layoutInput.text.isNotEmpty()) {
-                            try {
-                                val cursorRect = layout.getCursorRect(localCursor.coerceIn(0, layout.layoutInput.text.length))
-                                drawCircle(
-                                    brush = glowBrush,
-                                    radius = 40f,
-                                    center = Offset(cursorRect.left, cursorRect.top + cursorRect.height / 2)
-                                )
-                            } catch (e: Exception) {
-                                // getCursorRect can throw transiently while the layout is mid-update.
-                                // The cursor glow is purely decorative — skip it for this frame.
-                            }
-                        }
-                    }
-                }
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                          chunkLayoutResult?.let { layoutResult ->

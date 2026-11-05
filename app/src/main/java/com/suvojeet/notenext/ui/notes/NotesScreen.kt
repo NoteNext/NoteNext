@@ -66,7 +66,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.suvojeet.notenext.ui.add_edit_note.AddEditNoteScreen
 import com.suvojeet.notenext.ui.add_edit_note.components.PinnedReorderSheet
 import com.suvojeet.notenext.ui.components.*
-import com.suvojeet.notenext.ui.components.*
 import com.suvojeet.notenext.ui.theme.ThemeMode
 import com.suvojeet.notenext.data.repository.SettingsRepository
 import com.suvojeet.notenext.core.model.NoteType
@@ -170,21 +169,31 @@ fun NotesScreen(
                     context.startActivity(chooser)
                 }
 
+                // The editor is composed on top of this screen and collects the
+                // same flow. When it's open, let it own snackbars too — otherwise
+                // this host queues messages that surface later, after the editor
+                // closes, as stale duplicates.
                 is NotesUiEvent.ShowSnackbar -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = event.message,
-                        actionLabel = event.actionLabel,
-                        duration = SnackbarDuration.Short
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        event.onAction?.invoke()
+                    if (viewModel.editState.value.expandedNoteId == null) {
+                        val result = snackbarHostState.showSnackbar(
+                            message = event.message,
+                            actionLabel = event.actionLabel,
+                            duration = SnackbarDuration.Short
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            event.onAction?.invoke()
+                        }
                     }
                 }
                 is NotesUiEvent.LinkPreviewRemoved -> {
-                    snackbarHostState.showSnackbar(context.getString(R.string.link_preview_removed))
+                    if (viewModel.editState.value.expandedNoteId == null) {
+                        snackbarHostState.showSnackbar(context.getString(R.string.link_preview_removed))
+                    }
                 }
                 is NotesUiEvent.ProjectCreated -> {
-                    snackbarHostState.showSnackbar(context.getString(R.string.project_created, event.projectName))
+                    if (viewModel.editState.value.expandedNoteId == null) {
+                        snackbarHostState.showSnackbar(context.getString(R.string.project_created, event.projectName))
+                    }
                 }
                 is NotesUiEvent.NavigateToNoteByTitle -> {
                     val noteId = viewModel.getNoteIdByTitle(event.title)

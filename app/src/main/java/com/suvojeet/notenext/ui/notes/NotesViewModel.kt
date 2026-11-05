@@ -1136,15 +1136,9 @@ class NotesViewModel @Inject constructor(
             is NotesEvent.FilterByLabel -> {
                 listDelegate.updateState { it.copy(filteredLabel = event.label) }
             }
-            is NotesEvent.FilterByProject -> {
-                listDelegate.setProjectId(event.projectId)
-            }
             is NotesEvent.ToggleLayout -> {
                 val newLayout = if (listState.value.layoutType == LayoutType.GRID) LayoutType.LIST else LayoutType.GRID
                 listDelegate.updateState { it.copy(layoutType = newLayout) }
-            }
-            is NotesEvent.SortNotes -> {
-                listDelegate.setSortType(event.sortType)
             }
             is NotesEvent.OnRemoveLinkPreview -> {
                 val updatedLinkPreviews = editState.value.linkPreviews.filter { it.url != event.url }.toImmutableList()

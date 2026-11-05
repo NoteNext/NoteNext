@@ -142,7 +142,7 @@ fun NoteNextTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
         shapes = AppShapes,
-        motionScheme = MotionScheme.expressive(),
+        motionScheme = MotionScheme.standard(),
         content = content
     )
 }
