@@ -10,7 +10,8 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -382,15 +383,25 @@ fun AddEditNoteScreen(
         offsets
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            // Single owner for the bottom insets: the whole editor lifts above the
+            // keyboard (or the navigation bar when it is closed). Children below
+            // therefore never add their own IME padding, which is what left a
+            // keyboard-sized gap behind after the keyboard was dismissed.
+            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+    ) {
         Scaffold(
             containerColor = backgroundColor,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 AnimatedVisibility(
                     visible = !isFocusMode,
-                    enter = slideInVertically(initialOffsetY = { -it }, animationSpec = spring()) + fadeIn(spring()),
-                    exit = slideOutVertically(targetOffsetY = { -it }, animationSpec = spring()) + fadeOut(spring())
+                    enter = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeIn(tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+                    exit = slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeOut(tween(durationMillis = 220, easing = FastOutSlowInEasing))
                 ) {
                     AddEditNoteTopAppBar(
                         state = state,
@@ -409,16 +420,12 @@ fun AddEditNoteScreen(
             bottomBar = {
                 AnimatedVisibility(
                     visible = !isFocusMode,
-                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = spring()) + fadeIn(spring()),
-                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = spring()) + fadeOut(spring())
+                    enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeIn(tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+                    exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeOut(tween(durationMillis = 220, easing = FastOutSlowInEasing))
                 ) {
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            // Float above the keyboard when it's open, above the nav bar
-                            // when it's closed — the union takes the larger of the two, so
-                            // the nav-bar inset is never added on top of the IME inset.
-                            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                             .padding(horizontal = 8.dp, vertical = 4.dp),
                         shape = MaterialTheme.shapes.extraLarge,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
@@ -459,7 +466,6 @@ fun AddEditNoteScreen(
                                 }
                             )
                             .padding(padding)
-                            .then(if (isFocusMode) Modifier.imePadding() else Modifier)
                     ) {
                         AnimatedVisibility(
                             visible = state.isSearchingInNote,
@@ -635,12 +641,11 @@ fun AddEditNoteScreen(
         
         AnimatedVisibility(
             visible = showFormatBar && (state.editingNoteType == NoteType.TEXT || state.editingNoteType == NoteType.CHECKLIST),
-            enter = slideInVertically(initialOffsetY = { it }, animationSpec = spring()) + fadeIn(spring()) + androidx.compose.animation.scaleIn(initialScale = 0.9f, animationSpec = spring()),
-            exit = slideOutVertically(targetOffsetY = { it }, animationSpec = spring()) + fadeOut(spring()) + androidx.compose.animation.scaleOut(targetScale = 0.9f, animationSpec = spring()),
+            enter = slideInVertically(initialOffsetY = { it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeIn(tween(durationMillis = 220, easing = FastOutSlowInEasing)) + androidx.compose.animation.scaleIn(initialScale = 0.9f, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+            exit = slideOutVertically(targetOffsetY = { it }, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeOut(tween(durationMillis = 220, easing = FastOutSlowInEasing)) + androidx.compose.animation.scaleOut(targetScale = 0.9f, animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
-                .padding(bottom = 120.dp)
+                .padding(bottom = 88.dp)
         ) {
             Surface(
                 shadowElevation = 12.dp,
@@ -666,11 +671,10 @@ fun AddEditNoteScreen(
                            
         AnimatedVisibility(
             visible = showAiButton && !isFocusMode && !isAiButtonDismissed,
-            enter = fadeIn(spring()) + slideInVertically(animationSpec = spring()) { it } + androidx.compose.animation.scaleIn(animationSpec = spring(), initialScale = 0.8f),
-            exit = fadeOut(spring()) + slideOutVertically(animationSpec = spring()) { it } + androidx.compose.animation.scaleOut(animationSpec = spring(), targetScale = 0.8f),
+            enter = fadeIn(tween(durationMillis = 220, easing = FastOutSlowInEasing)) + slideInVertically(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) { it } + androidx.compose.animation.scaleIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing), initialScale = 0.8f),
+            exit = fadeOut(tween(durationMillis = 220, easing = FastOutSlowInEasing)) + slideOutVertically(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) { it } + androidx.compose.animation.scaleOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing), targetScale = 0.8f),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                 .offset { IntOffset(aiButtonOffsetX.roundToInt(), aiButtonOffsetY.roundToInt()) }
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
@@ -679,7 +683,7 @@ fun AddEditNoteScreen(
                         aiButtonOffsetY += dragAmount.y
                     }
                 }
-                .padding(bottom = 120.dp, end = 20.dp) 
+                .padding(bottom = 88.dp, end = 20.dp)
         ) {
             AiAssistantButton(
                 onClick = { showAiChecklistSheet = true },
@@ -689,14 +693,11 @@ fun AddEditNoteScreen(
 
         AnimatedVisibility(
             visible = state.fixedContentPreview != null,
-            enter = androidx.compose.animation.scaleIn(animationSpec = spring()) + fadeIn(spring()),
-            exit = androidx.compose.animation.scaleOut(animationSpec = spring()) + fadeOut(spring()),
+            enter = androidx.compose.animation.scaleIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeIn(tween(durationMillis = 220, easing = FastOutSlowInEasing)),
+            exit = androidx.compose.animation.scaleOut(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) + fadeOut(tween(durationMillis = 220, easing = FastOutSlowInEasing)),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                // Was missing IME handling, so it sat behind the keyboard. Now it
-                // rises with the keyboard like the other floating actions.
-                .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
-                .padding(bottom = 100.dp, end = 16.dp)
+                .padding(bottom = 84.dp, end = 16.dp)
         ) {
             Surface(
                 shape = MaterialTheme.shapes.extraLarge,

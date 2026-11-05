@@ -1,11 +1,12 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@file:OptIn(
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalLayoutApi::class
+)
 package com.suvojeet.notenext.ui.add_edit_note.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -16,31 +17,32 @@ import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.suvojeet.notenext.R
-import com.suvojeet.notenext.ui.components.springPress
+import com.suvojeet.notenext.core.model.NoteType
 import com.suvojeet.notenext.ui.notes.NotesEvent
 import com.suvojeet.notenext.ui.notes.NotesEditState
-import com.suvojeet.notenext.core.model.NoteType
-import com.suvojeet.notenext.data.ChecklistItem
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.ui.text.style.TextOverflow
-
+/**
+ * The note editor's "⋮" sheet, styled like Google Keep: a flat, monochrome
+ * grid of icon + label actions. Only the actions people reach for most are
+ * shown up front; the trailing "More" cell reveals the rest without opening a
+ * second screen, and toggles back to the compact set.
+ */
 @Composable
 fun MoreOptionsSheet(
     state: NotesEditState,
@@ -56,45 +58,57 @@ fun MoreOptionsSheet(
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault()) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    var showAll by remember { mutableStateOf(false) }
 
     val lockLabel = stringResource(id = if (state.editingIsLocked) R.string.unlock else R.string.lock)
     val lockIcon = if (state.editingIsLocked) Icons.Default.LockOpen else Icons.Default.Lock
-    // Hoisted out of remember{} — stringResource cannot be called inside it.
     val shareLabel = stringResource(id = R.string.share)
+    val labelsLabel = stringResource(id = R.string.labels)
     val makeCopyLabel = stringResource(id = R.string.make_a_copy)
+    val exportLabel = stringResource(id = R.string.export)
+    val printLabel = stringResource(id = R.string.print)
+    val selfDestructLabel = stringResource(id = R.string.self_destruct)
+    val deleteLabel = stringResource(id = R.string.delete_note)
+    val searchLabel = stringResource(id = R.string.search)
+    val historyLabel = stringResource(id = R.string.history)
+    val extractTasksLabel = stringResource(id = R.string.extract_tasks)
+    val toTodoLabel = stringResource(id = R.string.convert_to_todo)
     val undoLabel = stringResource(id = R.string.undo)
     val redoLabel = stringResource(id = R.string.redo)
-    
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary
-    val errorColor = MaterialTheme.colorScheme.error
+    val moreLabel = stringResource(id = R.string.show_more)
+    val lessLabel = stringResource(id = R.string.show_less)
+    val viewLabel = stringResource(
+        id = if (state.editingNoteType == NoteType.TEXT) R.string.convert_to_list else R.string.convert_to_text
+    )
 
-    // Labels for the grid
-    val options = remember(state.editingIsLocked, state.editingNoteType, state.editingIsNewNote, state.canUndo, state.canRedo, primaryColor, secondaryColor, tertiaryColor, errorColor, shareLabel) {
-        mutableListOf<OptionItem>().apply {
-            add(OptionItem(lockLabel, lockIcon, primaryColor) { onToggleLock() })
-            add(OptionItem("Self-Destruct", Icons.Default.Timer, errorColor) { showExpiryDialog(true) })
-            add(OptionItem(if (state.editingNoteType == NoteType.TEXT) "List View" else "Text View", Icons.Default.SwapHoriz, secondaryColor) { onEvent(NotesEvent.OnToggleNoteType) })
-            add(OptionItem("Search", Icons.Default.Search, primaryColor) { onEvent(NotesEvent.ToggleNoteSearch) })
-            add(OptionItem("Labels", Icons.AutoMirrored.Filled.Label, tertiaryColor) { onEvent(NotesEvent.OnAddLabelsToCurrentNoteClick) })
-            // Opens the Share dialog (Text vs. collaborative Link) instead of going
-            // straight to the system text-share sheet.
-            add(OptionItem(shareLabel, Icons.Default.Share, primaryColor) { onShare() })
-            add(OptionItem(makeCopyLabel, Icons.Default.ContentCopy, secondaryColor) { onEvent(NotesEvent.OnCopyCurrentNoteClick) })
-            add(OptionItem("Print", Icons.Default.Print, secondaryColor) { onPrint() })
-            add(OptionItem("Export", Icons.Default.FileDownload, tertiaryColor) { showSaveAsDialog(true) })
-            if (!state.editingIsNewNote) {
-                add(OptionItem("History", Icons.Default.History, secondaryColor) { showHistoryDialog(true) })
-            }
-            add(OptionItem("Extract Tasks", Icons.Default.AutoFixHigh, tertiaryColor) { onEvent(NotesEvent.ExtractActionItems) })
-            add(OptionItem("To Todo", Icons.Default.PlaylistAddCheck, tertiaryColor) { onEvent(NotesEvent.ConvertToTodo) })
-            add(OptionItem("Delete", Icons.Default.Delete, errorColor) { showDeleteDialog(true) })
-            // Undo/Redo relocated here from the bottom bar (Keep hides them on the bar).
-            if (state.canUndo) add(OptionItem(undoLabel, Icons.AutoMirrored.Rounded.Undo, secondaryColor) { onEvent(NotesEvent.OnUndoClick) })
-            if (state.canRedo) add(OptionItem(redoLabel, Icons.AutoMirrored.Rounded.Redo, secondaryColor) { onEvent(NotesEvent.OnRedoClick) })
+    val primaryOptions = listOf(
+        OptionItem(shareLabel, Icons.Default.Share) { onShare() },
+        OptionItem(labelsLabel, Icons.AutoMirrored.Filled.Label) { onEvent(NotesEvent.OnAddLabelsToCurrentNoteClick) },
+        OptionItem(makeCopyLabel, Icons.Default.ContentCopy) { onEvent(NotesEvent.OnCopyCurrentNoteClick) },
+        OptionItem(lockLabel, lockIcon) { onToggleLock() },
+        OptionItem(exportLabel, Icons.Default.FileDownload) { showSaveAsDialog(true) },
+        OptionItem(printLabel, Icons.Default.Print) { onPrint() },
+        OptionItem(selfDestructLabel, Icons.Default.Timer) { showExpiryDialog(true) },
+        OptionItem(deleteLabel, Icons.Default.Delete, destructive = true) { showDeleteDialog(true) }
+    )
+
+    val advancedOptions = buildList {
+        add(OptionItem(viewLabel, Icons.Default.SwapHoriz) { onEvent(NotesEvent.OnToggleNoteType) })
+        add(OptionItem(searchLabel, Icons.Default.Search) { onEvent(NotesEvent.ToggleNoteSearch) })
+        if (!state.editingIsNewNote) {
+            add(OptionItem(historyLabel, Icons.Default.History) { showHistoryDialog(true) })
+        }
+        add(OptionItem(extractTasksLabel, Icons.Default.AutoFixHigh) { onEvent(NotesEvent.ExtractActionItems) })
+        add(OptionItem(toTodoLabel, Icons.Default.PlaylistAddCheck) { onEvent(NotesEvent.ConvertToTodo) })
+        if (state.canUndo) {
+            add(OptionItem(undoLabel, Icons.AutoMirrored.Rounded.Undo) { onEvent(NotesEvent.OnUndoClick) })
+        }
+        if (state.canRedo) {
+            add(OptionItem(redoLabel, Icons.AutoMirrored.Rounded.Redo) { onEvent(NotesEvent.OnRedoClick) })
         }
     }
+
+    val options = if (showAll) primaryOptions + advancedOptions else primaryOptions
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -106,10 +120,10 @@ fun MoreOptionsSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp)
         ) {
             if (!state.editingIsNewNote && state.editingLastEdited != null && state.editingLastEdited != 0L) {
-                // Keep-style left-aligned "Edited <date>" header.
                 Text(
                     text = stringResource(id = R.string.edited, dateFormat.format(Date(state.editingLastEdited))),
                     style = MaterialTheme.typography.labelMedium,
@@ -125,21 +139,26 @@ fun MoreOptionsSheet(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
+            FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(options) { option ->
+                options.forEach { option ->
                     GridOptionItem(option) {
                         onDismiss()
                         option.action()
                     }
                 }
+                GridOptionItem(
+                    option = OptionItem(
+                        label = if (showAll) lessLabel else moreLabel,
+                        icon = if (showAll) Icons.Default.ExpandLess else Icons.Default.MoreHoriz
+                    ),
+                    onClick = { showAll = !showAll }
+                )
             }
         }
     }
@@ -148,8 +167,8 @@ fun MoreOptionsSheet(
 private data class OptionItem(
     val label: String,
     val icon: ImageVector,
-    val color: Color,
-    val action: () -> Unit
+    val destructive: Boolean = false,
+    val action: () -> Unit = {}
 )
 
 @Composable
@@ -159,33 +178,32 @@ private fun GridOptionItem(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
+            .width(88.dp)
+            .clip(RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .springPress()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 10.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(52.dp)
-                .background(option.color.copy(alpha = 0.1f), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = option.icon,
-                contentDescription = option.label,
-                tint = option.color,
-                modifier = Modifier.size(24.dp)
-            )
-        }
+        Icon(
+            imageVector = option.icon,
+            contentDescription = null,
+            tint = if (option.destructive) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.size(24.dp)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = option.label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (option.destructive) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center

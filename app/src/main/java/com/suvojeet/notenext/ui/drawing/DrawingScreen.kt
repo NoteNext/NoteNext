@@ -146,7 +146,7 @@ fun DrawingScreen(
             ) {
                 DrawingTopBar(
                     state = state,
-                    isTablet = isTablet,
+                    showPropertiesToggle = isWide,
                     showPaperMenu = showPaperMenu,
                     onPaperMenuChange = { showPaperMenu = it },
                     onEvent = onEvent,
@@ -187,7 +187,7 @@ fun DrawingScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(if (isTablet) 16.dp else 8.dp)
+                    .padding(if (isTablet) 20.dp else 8.dp)
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -264,7 +264,7 @@ fun DrawingScreen(
 @Composable
 private fun DrawingTopBar(
     state: DrawingState,
-    isTablet: Boolean,
+    showPropertiesToggle: Boolean,
     showPaperMenu: Boolean,
     onPaperMenuChange: (Boolean) -> Unit,
     onEvent: (DrawingEvent) -> Unit,
@@ -330,7 +330,7 @@ private fun DrawingTopBar(
                 )
             }
 
-            if (isTablet) {
+            if (showPropertiesToggle) {
                 IconButton(
                     onClick = { onEvent(DrawingEvent.TogglePropertiesPanel) },
                     modifier = Modifier.springPress()

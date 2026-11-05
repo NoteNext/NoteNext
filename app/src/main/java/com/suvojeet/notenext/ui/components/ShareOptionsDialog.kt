@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.TextFields
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.Warning
 import com.suvojeet.notenext.ui.notes.ShareStatusState
@@ -33,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -48,8 +46,8 @@ import com.suvojeet.notenext.R
 import com.suvojeet.notenext.data.share.ShareExpiry
 
 /**
- * A modern dialog that shows share options: QR Code or Text.
- * Used when user long-presses a note and selects Share.
+ * A simple, Keep-style share sheet offering the two ways a note can leave the
+ * app: as plain text through the system share sheet, or as an encrypted link.
  */
 @Composable
 fun ShareOptionsDialog(
@@ -60,68 +58,82 @@ fun ShareOptionsDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Header
+            Column(modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)) {
                 Text(
-                    text = "Share Note",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Choose how you'd like to share",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
+                    text = stringResource(R.string.share_note_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Options Row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    ShareOptionCard(
-                        icon = Icons.Default.TextFields,
-                        title = "Text",
-                        description = "Copy & send",
-                        iconColor = Color(0xFF03DAC5), // Teal
-                        modifier = Modifier.weight(1f),
-                        onClick = { onShareAsText(); onDismiss() }
-                    )
-
-                    if (onShareViaLink != null) {
-                        ShareOptionCard(
-                            icon = Icons.Default.Link,
-                            title = "Link",
-                            description = "Encrypted · expires",
-                            iconColor = Color(0xFF7C5CFF), // Purple
-                            modifier = Modifier.weight(1f),
-                            onClick = { onShareViaLink(); onDismiss() }
-                        )
+                ShareOptionRow(
+                    title = stringResource(R.string.share_as_text),
+                    description = stringResource(R.string.share_as_text_desc),
+                    onClick = {
+                        onShareAsText()
+                        onDismiss()
                     }
+                )
+
+                if (onShareViaLink != null) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                    ShareOptionRow(
+                        title = stringResource(R.string.share_as_link),
+                        description = stringResource(R.string.share_as_link_desc),
+                        onClick = {
+                            onShareViaLink()
+                            onDismiss()
+                        }
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Cancel Button
-                TextButton(
-                    onClick = onDismiss,
-                    modifier = Modifier.align(Alignment.End)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Text("Cancel")
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ShareOptionRow(
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = description,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -625,71 +637,6 @@ private fun expiryLabel(expiry: ShareExpiry): String = when (expiry) {
     ShareExpiry.ONE_HOUR -> "1 hour"
     ShareExpiry.ONE_DAY -> "1 day"
     ShareExpiry.SEVEN_DAYS -> "7 days"
-}
-
-@Composable
-private fun ShareOptionCard(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    iconColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        // Height wraps content (was a square aspectRatio, which clipped the
-        // description on narrow screens). A min height keeps the two cards even.
-        modifier = modifier
-            .defaultMinSize(minHeight = 150.dp)
-            .clickable(onClick = onClick)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 20.dp, horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // Icon
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(CircleShape)
-                    .background(iconColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = iconColor,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
-        }
-    }
 }
 
 /**

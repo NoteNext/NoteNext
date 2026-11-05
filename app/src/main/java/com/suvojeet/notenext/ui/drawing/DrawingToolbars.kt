@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -106,7 +107,7 @@ fun DrawingToolRail(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.width(88.dp).fillMaxHeight(),
+        modifier = modifier.width(96.dp).fillMaxHeight(),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = 2.dp
     ) {
@@ -114,9 +115,9 @@ fun DrawingToolRail(
             modifier = Modifier
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState())
-                .padding(vertical = 12.dp, horizontal = 8.dp),
+                .padding(vertical = 12.dp, horizontal = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             RailSectionLabel(R.string.drawing_section_tools)
             InkTools.forEach { spec ->
@@ -169,17 +170,18 @@ private fun ToolRailItem(
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         },
-        modifier = Modifier.fillMaxWidth().springPress()
+        modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp)
     ) {
         Column(
             modifier = Modifier.padding(vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(spec.icon, contentDescription = null, modifier = Modifier.size(22.dp))
-            Spacer(Modifier.height(2.dp))
+            Icon(spec.icon, contentDescription = null, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.height(3.dp))
             Text(
                 text = stringResource(id = spec.label),
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -187,7 +189,7 @@ private fun ToolRailItem(
                 Spacer(Modifier.height(4.dp))
                 Box(
                     modifier = Modifier
-                        .width(24.dp)
+                        .width(28.dp)
                         .height(3.dp)
                         .clip(CircleShape)
                         .background(accent)
@@ -207,7 +209,7 @@ fun DrawingPropertiesPanel(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.width(272.dp).fillMaxHeight(),
+        modifier = modifier.width(288.dp).fillMaxHeight(),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = 2.dp
     ) {
@@ -215,8 +217,8 @@ fun DrawingPropertiesPanel(
             modifier = Modifier
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             PanelHeader(R.string.drawing_color, Icons.Default.Palette)
             ColorGrid(
@@ -237,7 +239,8 @@ fun DrawingPropertiesPanel(
                         ColorWell(
                             color = color,
                             selected = state.color == color && !state.tool.isEraser,
-                            onClick = { onEvent(DrawingEvent.SelectColor(color)) }
+                            onClick = { onEvent(DrawingEvent.SelectColor(color)) },
+                            size = 36.dp
                         )
                     }
                 }
@@ -385,12 +388,12 @@ private fun WidthControls(state: DrawingState, onEvent: (DrawingEvent) -> Unit) 
                 } else {
                     MaterialTheme.colorScheme.surfaceContainerHighest
                 },
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(44.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Box(
                         modifier = Modifier
-                            .size((6 + preset / 6f).dp.coerceAtMost(26.dp))
+                            .size((6 + preset / 6f).dp.coerceAtMost(28.dp))
                             .clip(CircleShape)
                             .background(
                                 if (state.tool.isEraser) MaterialTheme.colorScheme.onSurfaceVariant
@@ -426,27 +429,28 @@ private fun ColorGrid(
 ) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         DrawingPalette.forEach { color ->
             ColorWell(
                 color = color,
                 selected = !isEraser && selected == color,
-                onClick = { onSelect(color) }
+                onClick = { onSelect(color) },
+                size = 40.dp
             )
         }
         Surface(
             onClick = onCustom,
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            modifier = Modifier.size(34.dp)
+            modifier = Modifier.size(40.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Default.Colorize,
                     contentDescription = stringResource(id = R.string.drawing_custom_color),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

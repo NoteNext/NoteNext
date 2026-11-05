@@ -31,6 +31,8 @@ import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,7 +54,6 @@ import com.suvojeet.notenext.util.BiometricAuthManager
 import com.suvojeet.notenext.util.findActivity
 import androidx.fragment.app.FragmentActivity
 import android.widget.Toast
-import com.suvojeet.notenext.ui.components.springPress
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import com.suvojeet.notenext.ui.notes.NotesListState
@@ -184,9 +185,10 @@ fun NavGraph(
                 PermanentDrawerSheet(
                     // A flat percentage is too narrow on a 10" tablet and too wide on a
                     // desktop-class display, so clamp it to a readable band.
-                    modifier = Modifier.widthIn(min = 240.dp, max = 320.dp),
-                    drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    drawerShape = MaterialTheme.shapes.extraLarge
+                    modifier = Modifier.widthIn(min = 248.dp, max = 320.dp),
+                    drawerContainerColor = Color.Black,
+                    drawerContentColor = Color.White,
+                    drawerShape = RectangleShape
                 ) {
                     DrawerContent(
                         navController = navController,
@@ -214,7 +216,8 @@ fun NavGraph(
             drawerContent = {
                 ModalDrawerSheet(
                     modifier = Modifier.fillMaxWidth(0.85f),
-                    drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    drawerContainerColor = Color.Black,
+                    drawerContentColor = Color.White,
                     drawerShape = RoundedCornerShape(topEnd = 28.dp, bottomEnd = 28.dp)
                 ) {
                     DrawerContent(
@@ -252,13 +255,25 @@ private fun DrawerContent(
     notesViewModel: NotesViewModel,
     onCloseDrawer: (onClosed: () -> Unit) -> Unit
 ) {
+    val drawerItemColors = NavigationDrawerItemDefaults.colors(
+        selectedContainerColor = Color.White.copy(alpha = 0.12f),
+        unselectedContainerColor = Color.Transparent,
+        selectedIconColor = Color.White,
+        unselectedIconColor = Color.White.copy(alpha = 0.68f),
+        selectedTextColor = Color.White,
+        unselectedTextColor = Color.White.copy(alpha = 0.9f)
+    )
+
     Text(
         text = stringResource(id = R.string.app_name),
-        style = MaterialTheme.typography.headlineMedium,
-        fontWeight = FontWeight.Black,
-        modifier = Modifier.padding(24.dp)
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = Color.White,
+        modifier = Modifier.padding(start = 28.dp, end = 28.dp, top = 20.dp, bottom = 14.dp)
     )
-    Spacer(modifier = Modifier.height(16.dp))
+
+    DrawerSectionLabel(text = stringResource(id = R.string.menu))
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -378,19 +393,23 @@ private fun DrawerContent(
     items.forEach { item ->
         NavigationDrawerItem(
             icon = { Icon(item.icon, contentDescription = stringResource(id = item.label)) },
-            label = { Text(stringResource(id = item.label), fontWeight = FontWeight.Bold) },
+            label = { Text(stringResource(id = item.label), fontWeight = FontWeight.Medium) },
             selected = item.isSelected,
             onClick = item.onClick,
-            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding).springPress()
+            colors = drawerItemColors,
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
     }
 
-    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp))
+    HorizontalDivider(
+        modifier = Modifier.padding(vertical = 12.dp, horizontal = 20.dp),
+        color = Color.White.copy(alpha = 0.12f)
+    )
 
     if (notesState.labels.isEmpty()) {
         NavigationDrawerItem(
             icon = { Icon(Icons.AutoMirrored.Filled.Label, contentDescription = stringResource(id = R.string.create_new_label)) },
-            label = { Text(stringResource(id = R.string.create_new_label), fontWeight = FontWeight.Bold) },
+            label = { Text(stringResource(id = R.string.create_new_label), fontWeight = FontWeight.Medium) },
             selected = false,
             onClick = {
                 onCloseDrawer {
@@ -403,21 +422,22 @@ private fun DrawerContent(
                     }
                 }
             },
-            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding).springPress()
+            colors = drawerItemColors,
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
     } else {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+                .padding(start = 28.dp, end = 20.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = stringResource(id = R.string.labels_title),
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.55f)
             )
             IconButton(onClick = {
                 onCloseDrawer {
@@ -429,11 +449,12 @@ private fun DrawerContent(
                         restoreState = true
                     }
                 }
-            }, modifier = Modifier.size(24.dp).springPress()) {
+            }, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = stringResource(id = R.string.edit_labels),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
                 )
             }
         }
@@ -441,7 +462,7 @@ private fun DrawerContent(
         notesState.labels.forEach { label ->
             NavigationDrawerItem(
                 icon = { Icon(Icons.AutoMirrored.Outlined.Label, contentDescription = label) },
-                label = { Text(label, fontWeight = FontWeight.Medium) },
+                label = { Text(label, fontWeight = FontWeight.Normal) },
                 selected = notesState.filteredLabel == label,
                 onClick = {
                     onCloseDrawer {
@@ -457,10 +478,24 @@ private fun DrawerContent(
                         }
                     }
                 },
-                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding).springPress()
+                colors = drawerItemColors,
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
             )
         }
     }
+
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+private fun DrawerSectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.Medium,
+        color = Color.White.copy(alpha = 0.55f),
+        modifier = Modifier.padding(start = 28.dp, end = 28.dp, top = 4.dp, bottom = 6.dp)
+    )
 }
 
 // ─── Shared NavHost ──────────────────────────────────────────────────

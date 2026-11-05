@@ -4,7 +4,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,8 +33,14 @@ fun NavGraphBuilder.projectGraph(
     onMenuClick: () -> Unit,
     isDecoySession: Boolean = false
 ) {
-    val slideEnter = slideInHorizontally(initialOffsetX = { it }, animationSpec = spring()) + fadeIn(spring())
-    val slideExit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = spring()) + fadeOut(spring())
+    val slideEnter = slideInHorizontally(
+        initialOffsetX = { it },
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)
+    ) + fadeIn(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing))
+    val slideExit = slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)
+    ) + fadeOut(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing))
 
     composable<Destination.Projects>(
         enterTransition = { slideEnter },

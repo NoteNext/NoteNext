@@ -119,6 +119,11 @@
     <string name="convert_to_list">Convert to List</string>
     <string name="convert_to_text">Convert to Text</string>
     <string name="convert_to_todo">Convert to Todo</string>
+    <string name="extract_tasks">Extract tasks</string>
+    <string name="export">Export</string>
+    <string name="self_destruct">Self-destruct</string>
+    <string name="show_more">More</string>
+    <string name="show_less">Less</string>
     <string name="print">Print</string>
     <string name="move_to_project">Move to Project</string>
     <string name="add_label">Add Label</string>
@@ -157,6 +162,13 @@
     <string name="share_link_expired_new">Your previous link expired. Create a new one.</string>
     <string name="share_link_verify_failed">Couldn\'t verify your link online. Showing the existing one.</string>
     <string name="share_via_link">Share link via</string>
+
+    <!-- Share options dialog -->
+    <string name="share_note_title">Share note</string>
+    <string name="share_as_text">Send as text</string>
+    <string name="share_as_text_desc">Share the note\'s content</string>
+    <string name="share_as_link">Send link</string>
+    <string name="share_as_link_desc">End-to-end encrypted link that expires</string>
     
     <!-- Heading Styles -->
     <string name="normal_text">Normal Text</string>

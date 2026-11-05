@@ -4,7 +4,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.collectAsState
@@ -40,12 +41,18 @@ fun NavGraphBuilder.notesGraph(
     isCompact: Boolean,
     windowSizeClass: androidx.compose.material3.windowsizeclass.WindowSizeClass
 ) {
-    val slideEnter = slideInHorizontally(initialOffsetX = { it }, animationSpec = spring()) + fadeIn(spring())
-    val slideExit = slideOutHorizontally(targetOffsetX = { it }, animationSpec = spring()) + fadeOut(spring())
+    val slideEnter = slideInHorizontally(
+        initialOffsetX = { it },
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)
+    ) + fadeIn(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing))
+    val slideExit = slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing)
+    ) + fadeOut(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing))
 
     composable<Destination.Notes>(
-        enterTransition = { fadeIn(animationSpec = spring()) },
-        exitTransition = { fadeOut(animationSpec = spring()) }
+        enterTransition = { fadeIn(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)) },
+        exitTransition = { fadeOut(animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)) }
     ) { backStackEntry ->
         if (isCompact) {
             val route: Destination.Notes = backStackEntry.toRoute()
