@@ -17,7 +17,18 @@ import javax.inject.Inject
 sealed interface ProjectScreenEvent {
     data class CreateNewNote(val projectId: Int) : ProjectScreenEvent
     data class CreateNewChecklist(val projectId: Int) : ProjectScreenEvent
-    data class CreateProject(val name: String, val description: String?, val parentId: Int? = null) : ProjectScreenEvent
+    data class CreateProject(
+        val name: String,
+        val description: String?,
+        val parentId: Int? = null,
+        val color: Int? = null
+    ) : ProjectScreenEvent
+    data class UpdateProject(
+        val projectId: Int,
+        val name: String,
+        val description: String?,
+        val color: Int? = null
+    ) : ProjectScreenEvent
     data class MoveProject(val projectId: Int, val newParentId: Int?) : ProjectScreenEvent
     data class ReorderProject(val projectId: Int, val newOrder: Int) : ProjectScreenEvent
     data class DeleteProject(val projectId: Int) : ProjectScreenEvent
@@ -38,6 +49,10 @@ class ProjectViewModel @Inject constructor(
         repository.getProjectHierarchy().onEach { projects ->
             _state.value = _state.value.copy(projects = projects)
         }.launchIn(viewModelScope)
+
+        repository.getProjectNoteCounts().onEach { counts ->
+            _state.value = _state.value.copy(noteCounts = counts)
+        }.launchIn(viewModelScope)
     }
 
     fun onEvent(event: ProjectScreenEvent) {
@@ -55,14 +70,30 @@ class ProjectViewModel @Inject constructor(
             is ProjectScreenEvent.CreateProject -> {
                 viewModelScope.launch {
                     if (event.name.isNotBlank()) {
-                        val maxOrder = repository.getRootProjects().onEach { }.let { 0 }
+                        val order = _state.value.projects.count { it.parentId == event.parentId }
                         val project = Project(
                             name = event.name,
                             description = event.description,
                             parentId = event.parentId,
-                            orderIndex = maxOrder + 1
+                            orderIndex = order,
+                            color = event.color
                         )
                         repository.insertProject(project)
+                    }
+                }
+            }
+            is ProjectScreenEvent.UpdateProject -> {
+                viewModelScope.launch {
+                    repository.getProjectById(event.projectId)?.let { existing ->
+                        if (event.name.isNotBlank()) {
+                            repository.updateProject(
+                                existing.copy(
+                                    name = event.name,
+                                    description = event.description,
+                                    color = event.color
+                                )
+                            )
+                        }
                     }
                 }
             }

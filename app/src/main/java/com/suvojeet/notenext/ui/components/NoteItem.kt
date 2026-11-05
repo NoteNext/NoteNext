@@ -59,6 +59,13 @@ fun NoteItem(
         }
     }
 
+    // The text body installs a pointerInput(Unit) tap detector. Without reading the
+    // latest callbacks through state, that detector kept the first composition's
+    // lambda — which still thought multi-select was off, so tapping a selected note
+    // opened it instead of toggling the selection.
+    val currentOnNoteClick by rememberUpdatedState(onNoteClick)
+    val currentOnNoteLongClick by rememberUpdatedState(onNoteLongClickHaptic)
+
     val adaptiveColor = remember(note.note.color, isDarkTheme) {
         NoteGradients.getAdaptiveColor(note.note.color, isDarkTheme)
     }
@@ -260,6 +267,7 @@ fun NoteItem(
                             }
     
                             val uriHandler = LocalUriHandler.current
+                            val currentHighlightedContent by rememberUpdatedState(highlightedContent)
                             var textLayoutResult by remember { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
 
                             Text(
@@ -274,32 +282,32 @@ fun NoteItem(
                                 modifier = Modifier.pointerInput(Unit) {
                                     detectTapGestures(
                                         onLongPress = {
-                                            onNoteLongClickHaptic()
+                                            currentOnNoteLongClick()
                                         },
                                         onTap = { pos ->
                                             val layoutResult = textLayoutResult ?: return@detectTapGestures
                                             val offset = layoutResult.getOffsetForPosition(pos)
                                             
                                             var isLink = false
-                                            highlightedContent.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation ->
+                                            currentHighlightedContent.getStringAnnotations(tag = "URL", start = offset, end = offset).firstOrNull()?.let { annotation ->
                                                 isLink = true
                                                 try { uriHandler.openUri(annotation.item) } catch (e: Exception) { e.printStackTrace() }
                                             }
                                             if (!isLink) {
-                                                highlightedContent.getStringAnnotations(tag = "EMAIL", start = offset, end = offset).firstOrNull()?.let { annotation ->
+                                                currentHighlightedContent.getStringAnnotations(tag = "EMAIL", start = offset, end = offset).firstOrNull()?.let { annotation ->
                                                     isLink = true
                                                     try { uriHandler.openUri(annotation.item) } catch (e: Exception) { e.printStackTrace() }
                                                 }
                                             }
                                             if (!isLink) {
-                                                highlightedContent.getStringAnnotations(tag = "PHONE", start = offset, end = offset).firstOrNull()?.let { annotation ->
+                                                currentHighlightedContent.getStringAnnotations(tag = "PHONE", start = offset, end = offset).firstOrNull()?.let { annotation ->
                                                     isLink = true
                                                     try { uriHandler.openUri(annotation.item) } catch (e: Exception) { e.printStackTrace() }
                                                 }
                                             }
                                             
                                             if (!isLink) {
-                                                onNoteClick()
+                                                currentOnNoteClick()
                                             }
                                         }
                                     )

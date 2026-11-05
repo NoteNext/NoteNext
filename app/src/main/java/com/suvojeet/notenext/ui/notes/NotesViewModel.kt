@@ -1148,22 +1148,13 @@ class NotesViewModel @Inject constructor(
                 }
             }
             is NotesEvent.OnInsertLink -> {
-                val content = editState.value.editingContent
-                val selection = content.selection
-                if (!selection.collapsed) {
-                    val selectedText = content.text.substring(selection.start, selection.end)
-                    val newAnnotatedString = buildAnnotatedString {
-                        append(content.annotatedString.subSequence(0, selection.start))
-                        pushStringAnnotation(tag = "URL", annotation = event.url)
-                        withStyle(style = SpanStyle(color = androidx.compose.ui.graphics.Color.Blue, textDecoration = TextDecoration.Underline)) {
-                            append(selectedText)
-                        }
-                        pop()
-                        append(content.annotatedString.subSequence(selection.end, content.text.length))
-                    }
-                    val newTextFieldValue = content.copy(annotatedString = newAnnotatedString)
-                    editorDelegate.updateState { it.copy(editingContent = newTextFieldValue) }
-                }
+                val updatedContent = richTextController.insertLink(
+                    content = editState.value.editingContent,
+                    rawUrl = event.url,
+                    displayText = event.displayText
+                )
+                editorDelegate.updateState { it.copy(editingContent = updatedContent) }
+                scheduleAutoSave()
             }
             is NotesEvent.ClearNewlyAddedChecklistItemId -> {
                 editorDelegate.updateState { it.copy(newlyAddedChecklistItemId = null) }

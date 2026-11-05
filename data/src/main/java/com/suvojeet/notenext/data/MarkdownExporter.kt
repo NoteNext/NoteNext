@@ -54,6 +54,18 @@ object MarkdownExporter {
                         traverse(node, sb)
                         sb.append("\n")
                     }
+                    "a" -> {
+                        val href = node.attr("href").trim()
+                        if (href.isEmpty()) {
+                            traverse(node, sb)
+                        } else {
+                            sb.append("[")
+                            traverse(node, sb)
+                            sb.append("](")
+                            sb.append(href)
+                            sb.append(")")
+                        }
+                    }
                     else -> traverse(node, sb)
                 }
             }

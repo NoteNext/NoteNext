@@ -196,10 +196,21 @@ fun AddEditNoteDialogs(
     }
 
     if (showInsertLinkDialog) {
+        val selection = state.editingContent.selection
+        val selectedText = if (!selection.collapsed) {
+            state.editingContent.text
+                .substring(
+                    selection.min.coerceIn(0, state.editingContent.text.length),
+                    selection.max.coerceIn(0, state.editingContent.text.length)
+                )
+        } else {
+            ""
+        }
         InsertLinkDialog(
             onDismiss = { onShowInsertLinkDialogChange(false) },
+            initialText = selectedText,
             onInsertLink = { text, url ->
-                onEvent(NotesEvent.OnInsertLink(url))
+                onEvent(NotesEvent.OnInsertLink(url, text))
                 onShowInsertLinkDialogChange(false)
             }
         )

@@ -27,8 +27,18 @@ interface ProjectDao {
     @Query("DELETE FROM projects WHERE id = :projectId")
     suspend fun deleteProject(projectId: Int)
 
+    @Query("UPDATE notes SET projectId = NULL WHERE projectId IN (:projectIds)")
+    suspend fun clearProjectFromNotes(projectIds: List<Int>)
+
     @Query("SELECT * FROM projects WHERE id = :projectId")
     suspend fun getProjectById(projectId: Int): Project?
+
+    @Query("""
+        SELECT projectId, COUNT(*) AS noteCount FROM notes
+        WHERE projectId IS NOT NULL AND isArchived = 0 AND isBinned = 0 AND isDecoy = 0
+        GROUP BY projectId
+    """)
+    fun getProjectNoteCounts(): Flow<List<ProjectNoteCount>>
 
     @Query("SELECT * FROM projects WHERE parentId IS NULL ORDER BY orderIndex ASC, createdAt DESC")
     suspend fun getRootProjectsSync(): List<Project>

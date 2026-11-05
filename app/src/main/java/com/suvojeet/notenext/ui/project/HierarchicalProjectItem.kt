@@ -31,6 +31,9 @@ import java.util.Locale
 
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Home
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -44,7 +47,13 @@ fun HierarchicalProjectItem(
     onCreateSubProject: () -> Unit,
     onAddToHome: () -> Unit,
     modifier: Modifier = Modifier,
-    depth: Int = 0
+    depth: Int = 0,
+    noteCount: Int = 0,
+    subProjectCount: Int = 0,
+    onCreateNote: () -> Unit = {},
+    onCreateChecklist: () -> Unit = {},
+    onEdit: () -> Unit = {},
+    onDelete: () -> Unit = onLongClick
 ) {
     val dateFormat = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()) }
     val formattedDate = remember(project.createdAt) {
@@ -91,7 +100,8 @@ fun HierarchicalProjectItem(
                 Icon(
                     imageVector = Icons.Outlined.Folder,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    tint = project.color?.let { androidx.compose.ui.graphics.Color(0xFF1F2937) }
+                        ?: MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -128,11 +138,24 @@ fun HierarchicalProjectItem(
                         tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
+                    val noteLabel = if (noteCount == 1) "1 note" else "$noteCount notes"
                     Text(
-                        text = formattedDate,
+                        text = noteLabel,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (subProjectCount > 0) {
+                        Text(
+                            text = " · $subProjectCount subproject" + if (subProjectCount == 1) "" else "s",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                        )
+                    }
+                    Text(
+                        text = " · $formattedDate",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -154,6 +177,31 @@ fun HierarchicalProjectItem(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
+                        text = { Text(stringResource(id = R.string.projects_new_note)) },
+                        leadingIcon = { Icon(Icons.Default.NoteAdd, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onCreateNote()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(id = R.string.projects_new_checklist)) },
+                        leadingIcon = { Icon(Icons.Default.Checklist, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onCreateChecklist()
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(id = R.string.projects_edit)) },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onEdit()
+                        }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
                         text = { Text(stringResource(id = R.string.projects_add_subproject)) },
                         leadingIcon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
                         onClick = {
@@ -174,7 +222,7 @@ fun HierarchicalProjectItem(
                         leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
                         onClick = {
                             showMenu = false
-                            onLongClick()
+                            onDelete()
                         }
                     )
                 }

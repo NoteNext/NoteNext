@@ -96,9 +96,10 @@ private fun SaveAsOption(
 @Composable
 fun InsertLinkDialog(
     onDismiss: () -> Unit,
-    onInsertLink: (String, String) -> Unit
+    onInsertLink: (String, String) -> Unit,
+    initialText: String = ""
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by remember(initialText) { mutableStateOf(initialText) }
     var url by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -126,7 +127,8 @@ fun InsertLinkDialog(
         confirmButton = {
             Button(
                 onClick = { onInsertLink(text, url) },
-                enabled = text.isNotBlank() && url.isNotBlank(),
+                // A label is optional: when it is empty the URL becomes the link text.
+                enabled = url.isNotBlank(),
                 modifier = Modifier.springPress()
             ) {
                 Text(stringResource(id = R.string.link_dialog_insert))

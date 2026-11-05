@@ -46,15 +46,15 @@ fun SearchBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(48.dp),
         shape = fullShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        tonalElevation = 2.dp
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             AnimatedContent(
@@ -65,21 +65,26 @@ fun SearchBar(
                 label = "SearchIconAnimation"
             ) { active ->
                 if (active) {
-                    IconButton(onClick = { 
-                        onSearchActiveChange(false)
-                        onSearchQueryChange("")
-                    }) {
+                    IconButton(
+                        onClick = {
+                            onSearchActiveChange(false)
+                            onSearchQueryChange("")
+                        },
+                        modifier = Modifier.size(40.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(id = R.string.back)
+                            contentDescription = stringResource(id = R.string.back),
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 } else {
-                    Box(modifier = Modifier.padding(start = 8.dp)) {
+                    Box(modifier = Modifier.padding(start = 12.dp, end = 4.dp)) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = stringResource(id = R.string.search_notes),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -94,7 +99,7 @@ fun SearchBar(
                 placeholder = { 
                     Text(
                         stringResource(id = R.string.search_notes),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     ) 
                 },
@@ -109,29 +114,34 @@ fun SearchBar(
                     unfocusedIndicatorColor = Color.Transparent,
                     cursorColor = MaterialTheme.colorScheme.primary
                 ),
-                textStyle = MaterialTheme.typography.bodyLarge,
+                textStyle = MaterialTheme.typography.bodyMedium,
                 singleLine = true
             )
 
             if (searchQuery.isNotEmpty()) {
-                IconButton(onClick = { onSearchQueryChange("") }) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                IconButton(
+                    onClick = { onSearchQueryChange("") },
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Icon(Icons.Default.Close, contentDescription = "Clear", modifier = Modifier.size(20.dp))
                 }
             }
 
             if (!isSearchActive) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onLayoutToggleClick) {
+                    IconButton(onClick = onLayoutToggleClick, modifier = Modifier.size(40.dp)) {
                         Icon(
                             imageVector = if (layoutType == LayoutType.GRID) Icons.Default.ViewAgenda else Icons.Default.GridView,
-                            contentDescription = "Toggle Layout"
+                            contentDescription = "Toggle Layout",
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                     Box {
-                        IconButton(onClick = onSortClick) {
+                        IconButton(onClick = onSortClick, modifier = Modifier.size(40.dp)) {
                             Icon(
                                 imageVector = Icons.Default.Sort,
-                                contentDescription = "Sort"
+                                contentDescription = "Sort",
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                         DropdownMenu(

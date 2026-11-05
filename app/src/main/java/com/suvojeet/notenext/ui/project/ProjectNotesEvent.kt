@@ -89,7 +89,7 @@ sealed class ProjectNotesEvent {
     data class OnRemoveLinkPreview(val url: String) : ProjectNotesEvent()
     object ToggleLayout : ProjectNotesEvent()
     data class SortNotes(val sortType: SortType) : ProjectNotesEvent()
-    data class OnInsertLink(val url: String) : ProjectNotesEvent()
+    data class OnInsertLink(val url: String, val displayText: String? = null) : ProjectNotesEvent()
     object ClearNewlyAddedChecklistItemId : ProjectNotesEvent()
     data class AddAttachment(val uri: String, val mimeType: String) : ProjectNotesEvent()
     data class RemoveAttachment(val tempId: String) : ProjectNotesEvent()

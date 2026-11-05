@@ -13,4 +13,10 @@
     <string name="projects_collapse_cd">Collapse</string>
     <string name="projects_pin_to_home">Pin to home</string>
     <string name="projects_add_subproject">Add subproject</string>
+    <string name="projects_new_note">New note</string>
+    <string name="projects_new_checklist">New checklist</string>
+    <string name="projects_edit">Edit project</string>
+    <string name="projects_color">Accent colour</string>
+    <string name="projects_search_hint">Search projects</string>
+    <string name="projects_search_empty">No matching projects</string>
 </resources>

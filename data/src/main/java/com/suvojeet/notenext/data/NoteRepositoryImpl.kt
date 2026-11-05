@@ -267,9 +267,31 @@ class NoteRepositoryImpl @Inject constructor(
 
     override suspend fun updateProject(project: Project) = projectDao.updateProject(project)
 
-    override suspend fun deleteProject(projectId: Int) = projectDao.deleteProject(projectId)
+    override suspend fun deleteProject(projectId: Int) = runInTransaction {
+        // Remove subprojects too and detach their notes, otherwise the notes keep
+        // pointing at a project id that no longer exists.
+        val allProjects = projectDao.getAllProjects().first()
+        val idsToDelete = mutableSetOf(projectId)
+        var changed = true
+        while (changed) {
+            changed = false
+            allProjects.forEach { project ->
+                val parentId = project.parentId
+                if (parentId != null && parentId in idsToDelete && idsToDelete.add(project.id)) {
+                    changed = true
+                }
+            }
+        }
+        projectDao.clearProjectFromNotes(idsToDelete.toList())
+        idsToDelete.forEach { id -> projectDao.deleteProject(id) }
+    }
 
     override suspend fun getProjectById(projectId: Int): Project? = projectDao.getProjectById(projectId)
+
+    override fun getProjectNoteCounts(): Flow<Map<Int, Int>> =
+        projectDao.getProjectNoteCounts().map { counts ->
+            counts.associate { it.projectId to it.noteCount }
+        }
 
     override suspend fun moveProject(projectId: Int, newParentId: Int?) {
         projectDao.moveProjectToParent(projectId, newParentId)

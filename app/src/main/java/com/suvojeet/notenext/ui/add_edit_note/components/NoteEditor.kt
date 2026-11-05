@@ -146,7 +146,6 @@ fun NoteContentChunkEditor(
     // Hold latest references
     val currentOnUrlClick by rememberUpdatedState(onUrlClick)
     val currentOnEvent by rememberUpdatedState(onEvent)
-    
     val cursorColor = MaterialTheme.colorScheme.primary
 
     val contentTextColor = MaterialTheme.colorScheme.onSurface
@@ -260,6 +259,12 @@ fun NoteContentChunkEditor(
         }
     }
 
+    // The tap detector below is installed with pointerInput(Unit), so it must read
+    // the *current* chunk through rememberUpdatedState. Capturing the value directly
+    // froze the annotations from the first composition, which is why links inserted
+    // later in the session were not clickable.
+    val currentChunk by rememberUpdatedState(chunk)
+
     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
         BasicTextField(
             value = highlightedChunk,
@@ -299,7 +304,7 @@ fun NoteContentChunkEditor(
                     detectTapGestures { offset ->
                          chunkLayoutResult?.let { layoutResult ->
                              val position = layoutResult.getOffsetForPosition(offset)
-                             val annotatedString = chunk.annotatedString
+                             val annotatedString = currentChunk.annotatedString
 
                              val urlAnnotation = annotatedString.getStringAnnotations("URL", position, position).firstOrNull()
                                  ?: annotatedString.getStringAnnotations("EMAIL", position, position).firstOrNull()

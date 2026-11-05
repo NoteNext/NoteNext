@@ -16,7 +16,32 @@ import androidx.compose.ui.graphics.Color
 
 class RichTextController @Inject constructor() {
 
-    private val WikiLinkStyle = SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline)
+    companion object {
+        /**
+         * Single, calm link colour used everywhere (editor spans, HTML round-trip and
+         * previews). The old hard-coded purple/blue made links look like a different
+         * app; this blue reads well on both light and dark surfaces.
+         */
+        val LinkColor = Color(0xFF3B82F6)
+
+        /** Normalises user input such as "example.com" into a real, clickable URL. */
+        fun normalizeUrl(raw: String): String {
+            val trimmed = raw.trim()
+            if (trimmed.isEmpty()) return trimmed
+            val lower = trimmed.lowercase()
+            return when {
+                lower.startsWith("http://") ||
+                    lower.startsWith("https://") ||
+                    lower.startsWith("mailto:") ||
+                    lower.startsWith("tel:") -> trimmed
+                Regex("^[\\w.+-]+@[\\w-]+\\.[\\w.-]+$").matches(trimmed) -> "mailto:$trimmed"
+                else -> "https://$trimmed"
+            }
+        }
+    }
+
+    private val WikiLinkStyle = SpanStyle(color = LinkColor, textDecoration = TextDecoration.Underline)
+    private val UrlLinkStyle = SpanStyle(color = LinkColor, textDecoration = TextDecoration.Underline)
 
     fun getHeadingStyle(level: Int): SpanStyle {
         return when (level) {
@@ -67,7 +92,40 @@ class RichTextController @Inject constructor() {
             append(oldContent.annotatedString.subSequence(oldText.length - suffixLength, oldText.length))
         }
         
-        return reapplyWikiLinks(newContent.copy(annotatedString = newAnnotatedString))
+        return reapplyWikiLinks(
+            preserveLinkAnnotations(
+                newContent.copy(annotatedString = newAnnotatedString),
+                newContent
+            )
+        )
+    }
+
+    /**
+     * [TextFieldValue] adjusts its string annotations as the user types. The
+     * rebuild above only carries span styles across, so re-apply the URL/email/
+     * phone annotations from the incoming value; otherwise typing inside or next
+     * to a link silently turned it into plain text.
+     */
+    private fun preserveLinkAnnotations(
+        content: TextFieldValue,
+        source: TextFieldValue
+    ): TextFieldValue {
+        val tags = listOf("URL", "EMAIL", "PHONE")
+        val annotations = tags.flatMap { tag ->
+            source.annotatedString
+                .getStringAnnotations(tag, 0, source.text.length)
+                .map { tag to it }
+        }
+        if (annotations.isEmpty()) return content
+
+        val builder = AnnotatedString.Builder(content.annotatedString)
+        annotations.forEach { (tag, range) ->
+            if (range.start >= 0 && range.end <= content.text.length && range.start < range.end) {
+                builder.addStringAnnotation(tag, range.item, range.start, range.end)
+                builder.addStyle(UrlLinkStyle, range.start, range.end)
+            }
+        }
+        return content.copy(annotatedString = builder.toAnnotatedString())
     }
 
     private fun reapplyWikiLinks(content: TextFieldValue): TextFieldValue {
@@ -266,6 +324,46 @@ class RichTextController @Inject constructor() {
         return a.substring(a.length - minLength)
     }
 
+    /**
+     * Inserts a link at the current selection. When text is selected it becomes the
+     * link label (or is replaced by [displayText] if the user edited the label);
+     * when the selection is collapsed the label is inserted at the cursor.
+     */
+    fun insertLink(
+        content: TextFieldValue,
+        rawUrl: String,
+        displayText: String? = null
+    ): TextFieldValue {
+        val text = content.text
+        val selection = content.selection
+        val start = selection.min.coerceIn(0, text.length)
+        val end = selection.max.coerceIn(0, text.length)
+
+        val url = normalizeUrl(rawUrl)
+        if (url.isEmpty()) return content
+
+        val selectedText = text.substring(start, end)
+        val label = displayText?.takeIf { it.isNotBlank() }
+            ?: selectedText.takeIf { it.isNotBlank() }
+            ?: url
+
+        val newAnnotatedString = buildAnnotatedString {
+            append(content.annotatedString.subSequence(0, start))
+            pushStringAnnotation(tag = "URL", annotation = url)
+            withStyle(UrlLinkStyle) {
+                append(label)
+            }
+            pop()
+            append(content.annotatedString.subSequence(end, text.length))
+        }
+
+        val newCursor = (start + label.length).coerceIn(0, newAnnotatedString.length)
+        return content.copy(
+            annotatedString = newAnnotatedString,
+            selection = TextRange(newCursor)
+        )
+    }
+
     fun parseMarkdownToAnnotatedString(text: String): AnnotatedString {
         return buildAnnotatedString {
             var currentText = text
@@ -316,8 +414,8 @@ class RichTextController @Inject constructor() {
                         match.value.startsWith("[") -> {
                             val linkText = match.groupValues[1]
                             val url = match.groupValues[2]
-                            pushStringAnnotation(tag = "URL", annotation = url)
-                            withStyle(SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline)) {
+                            pushStringAnnotation(tag = "URL", annotation = normalizeUrl(url))
+                            withStyle(UrlLinkStyle) {
                                 append(linkText)
                             }
                             pop()

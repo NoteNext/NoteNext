@@ -17,3 +17,10 @@ data class Project(
     val orderIndex: Int = 0,
     val color: Int? = null
 )
+
+/** Aggregated note count for a single project, used by the project list. */
+@Immutable
+data class ProjectNoteCount(
+    val projectId: Int,
+    val noteCount: Int
+)

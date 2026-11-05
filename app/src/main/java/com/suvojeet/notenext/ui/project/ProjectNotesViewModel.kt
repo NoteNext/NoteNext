@@ -294,6 +294,9 @@ class ProjectNotesViewModel @Inject constructor(
                             )
                         }
                     } else {
+                        // Reuse one item id for both the model and the text-field map;
+                        // generating two different UUIDs left the first row uneditable.
+                        val initialChecklistItem = ChecklistItem(text = "", isChecked = false)
                         _state.value = state.value.copy(
                             expandedNoteId = -1,
                             editingTitle = "",
@@ -307,10 +310,9 @@ class ProjectNotesViewModel @Inject constructor(
                             editingProjectId = if (projectId != -1) projectId else null,
                             linkPreviews = emptyList(),
                             editingNoteType = event.noteType,
-                            editingChecklist = if (event.noteType == NoteType.CHECKLIST) listOf(ChecklistItem(text = "", isChecked = false)) else emptyList(),
+                            editingChecklist = if (event.noteType == NoteType.CHECKLIST) listOf(initialChecklistItem) else emptyList(),
                             checklistInputValues = if (event.noteType == NoteType.CHECKLIST) {
-                                val id = java.util.UUID.randomUUID().toString()
-                                mapOf(id to TextFieldValue(""))
+                                mapOf(initialChecklistItem.id to TextFieldValue(""))
                             } else emptyMap(),
                             focusedChecklistItemId = null,
                             editingAttachments = emptyList(),
@@ -1087,22 +1089,13 @@ class ProjectNotesViewModel @Inject constructor(
                 }
             }
             is ProjectNotesEvent.OnInsertLink -> {
-                val content = state.value.editingContent
-                val selection = content.selection
-                if (!selection.collapsed) {
-                    val selectedText = content.text.substring(selection.start, selection.end)
-                    val newAnnotatedString = buildAnnotatedString {
-                        append(content.annotatedString.subSequence(0, selection.start))
-                        pushStringAnnotation(tag = "URL", annotation = event.url)
-                        withStyle(style = SpanStyle(color = androidx.compose.ui.graphics.Color.Blue, textDecoration = TextDecoration.Underline)) {
-                            append(selectedText)
-                        }
-                        pop()
-                        append(content.annotatedString.subSequence(selection.end, content.text.length))
-                    }
-                    val newTextFieldValue = content.copy(annotatedString = newAnnotatedString)
-                    _state.value = state.value.copy(editingContent = newTextFieldValue)
-                }
+                val updatedContent = richTextController.insertLink(
+                    content = state.value.editingContent,
+                    rawUrl = event.url,
+                    displayText = event.displayText
+                )
+                _state.value = state.value.copy(editingContent = updatedContent)
+                scheduleAutoSave()
             }
             is ProjectNotesEvent.ClearNewlyAddedChecklistItemId -> {
                 _state.value = state.value.copy(newlyAddedChecklistItemId = null)

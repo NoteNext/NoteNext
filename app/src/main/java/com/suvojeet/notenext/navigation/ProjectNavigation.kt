@@ -12,11 +12,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.suvojeet.notenext.ui.project.toNotesUiEvent
 import com.suvojeet.notenext.ui.notes.NotesUiEvent
 import com.suvojeet.notenext.ui.project.ProjectScreen
 import com.suvojeet.notenext.ui.project.ProjectNotesScreen
 import com.suvojeet.notenext.ui.project.ProjectNotesViewModel
+import com.suvojeet.notenext.ui.project.ProjectNotesEvent
 import com.suvojeet.notenext.ui.project.toNotesEditState
 import com.suvojeet.notenext.ui.project.toProjectNotesEvent
 import com.suvojeet.notenext.ui.add_edit_note.AddEditNoteScreen
@@ -70,10 +72,18 @@ fun NavGraphBuilder.projectGraph(
     composable<Destination.AddEditNote>(
         enterTransition = { slideEnter },
         exitTransition = { slideExit }
-    ) {
+    ) { backStackEntry ->
+        val route = backStackEntry.toRoute<Destination.AddEditNote>()
         val viewModel: ProjectNotesViewModel = hiltViewModel()
         val scope = rememberCoroutineScope()
-        
+
+        // Typed AddEditNote destinations start with no expanded note, so seed the
+        // editor once. Without this the screen opened in an uninitialised state and
+        // checklist creation silently fell back to a text note.
+        androidx.compose.runtime.LaunchedEffect(route.projectId, route.noteType) {
+            viewModel.onEvent(ProjectNotesEvent.ExpandNote(-1, route.noteType))
+        }
+
         androidx.compose.runtime.LaunchedEffect(isDecoySession) {
             viewModel.setDecoyMode(isDecoySession)
         }

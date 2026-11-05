@@ -54,6 +54,7 @@ interface NoteRepository {
     suspend fun updateProject(project: Project)
     suspend fun deleteProject(projectId: Int)
     suspend fun getProjectById(projectId: Int): Project?
+    fun getProjectNoteCounts(): Flow<Map<Int, Int>>
     suspend fun moveProject(projectId: Int, newParentId: Int?)
     suspend fun reorderProject(projectId: Int, newOrder: Int)
 

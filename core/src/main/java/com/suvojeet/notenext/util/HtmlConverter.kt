@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.text.style.URLSpan
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -16,6 +17,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object HtmlConverter {
+
+    /** Keep link colour in sync with RichTextController.LinkColor. */
+    private const val LINK_COLOR = 0xFF3B82F6.toInt()
+
+    private val LinkSpanStyle = SpanStyle(
+        color = androidx.compose.ui.graphics.Color(LINK_COLOR),
+        textDecoration = TextDecoration.Underline
+    )
 
     suspend fun annotatedStringToHtml(annotatedString: AnnotatedString): String = withContext(Dispatchers.Default) {
         val spanned = annotatedStringToSpanned(annotatedString)
@@ -36,6 +45,23 @@ object HtmlConverter {
 
             if (style.textDecoration == TextDecoration.Underline) {
                 spannable.setSpan(UnderlineSpan(), range.start, range.end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+        }
+
+        // Persist links as real <a href> tags. Without this the URL annotation only
+        // lived in memory and disappeared the moment the note was saved/reloaded.
+        val emittedLinks = mutableSetOf<String>()
+        listOf("URL", "EMAIL", "PHONE").forEach { tag ->
+            annotatedString.getStringAnnotations(tag, 0, annotatedString.length).forEach { range ->
+                val url = range.item
+                if (url.isNotBlank() && emittedLinks.add("${range.start}:${range.end}:$url")) {
+                    spannable.setSpan(
+                        URLSpan(url),
+                        range.start,
+                        range.end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
             }
         }
         return spannable
@@ -86,6 +112,18 @@ object HtmlConverter {
                 val end = spanned.getSpanEnd(span)
                 if (start in 0..spannedText.length && end in 0..spannedText.length && start < end) {
                     when (span) {
+                        is URLSpan -> {
+                            val url = span.url
+                            if (!url.isNullOrBlank()) {
+                                val tag = when {
+                                    url.startsWith("mailto:", ignoreCase = true) -> "EMAIL"
+                                    url.startsWith("tel:", ignoreCase = true) -> "PHONE"
+                                    else -> "URL"
+                                }
+                                addStringAnnotation(tag, url, start, end)
+                                addStyle(LinkSpanStyle, start, end)
+                            }
+                        }
                         is StyleSpan -> {
                             when (span.style) {
                                 android.graphics.Typeface.BOLD -> addStyle(SpanStyle(fontWeight = FontWeight.Bold), start, end)
@@ -107,7 +145,7 @@ object HtmlConverter {
                 val title = matchResult.groupValues[1]
                 addStyle(
                     SpanStyle(
-                        color = androidx.compose.ui.graphics.Color(0xFFD0BCFF), // Light Purple for Note Links
+                        color = androidx.compose.ui.graphics.Color(LINK_COLOR),
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Medium
                     ),
@@ -130,7 +168,7 @@ object HtmlConverter {
                 val url = matchResult.value
                 addStyle(
                     SpanStyle(
-                        color = androidx.compose.ui.graphics.Color(0xFF64B5F6), // Light Blue for URLs
+                        color = androidx.compose.ui.graphics.Color(LINK_COLOR), // Shared link colour
                         textDecoration = TextDecoration.Underline
                     ),
                     start,
@@ -152,7 +190,7 @@ object HtmlConverter {
                 val email = matchResult.value
                 addStyle(
                     SpanStyle(
-                        color = androidx.compose.ui.graphics.Color(0xFF64B5F6),
+                        color = androidx.compose.ui.graphics.Color(LINK_COLOR),
                         textDecoration = TextDecoration.Underline
                     ),
                     start,
@@ -175,7 +213,7 @@ object HtmlConverter {
                 val phone = matchResult.value
                 addStyle(
                     SpanStyle(
-                        color = androidx.compose.ui.graphics.Color(0xFF64B5F6),
+                        color = androidx.compose.ui.graphics.Color(LINK_COLOR),
                         textDecoration = TextDecoration.Underline
                     ),
                     start,

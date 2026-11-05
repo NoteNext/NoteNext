@@ -63,7 +63,7 @@ fun NotesEvent.toProjectNotesEvent(): ProjectNotesEvent {
         is NotesEvent.OnRemoveLinkPreview -> ProjectNotesEvent.OnRemoveLinkPreview(this.url)
         is NotesEvent.ToggleLayout -> ProjectNotesEvent.ToggleLayout
         is NotesEvent.SortNotes -> ProjectNotesEvent.SortNotes(this.sortType)
-        is NotesEvent.OnInsertLink -> ProjectNotesEvent.OnInsertLink(this.url)
+        is NotesEvent.OnInsertLink -> ProjectNotesEvent.OnInsertLink(this.url, this.displayText)
         is NotesEvent.ClearNewlyAddedChecklistItemId -> ProjectNotesEvent.ClearNewlyAddedChecklistItemId
         is NotesEvent.AddAttachment -> ProjectNotesEvent.AddAttachment(this.uri, this.mimeType)
         is NotesEvent.RemoveAttachment -> ProjectNotesEvent.RemoveAttachment(this.tempId)
